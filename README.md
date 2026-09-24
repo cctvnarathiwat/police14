@@ -124,3 +124,20 @@ PGlite tests จำลอง Supabase Auth/Storage schema เพื่อทด�
 - Supabase Auth: https://supabase.com/docs/guides/auth/passwords
 - RLS: https://supabase.com/docs/guides/database/postgres/row-level-security
 - Private storage: https://supabase.com/docs/guides/storage/buckets/fundamentals
+
+## Deploy บน GitHub Pages
+
+Workflow `.github/workflows/deploy-pages.yml` ทดสอบและ build ด้วย base `/police14/` ก่อนเผยแพร่ทุกครั้งที่ push เข้า `main` โดย production ปิด demo เสมอ
+
+1. ผู้ดูแล repository ตั้ง Settings → Pages → Source เป็น **GitHub Actions**
+2. ติดตั้ง migration และบัญชีผู้ดูแล Supabase ตามขั้นตอนด้านบน
+3. ใน Settings → Secrets and variables → Actions → Variables เพิ่ม `VITE_SUPABASE_PUBLISHABLE_KEY` ด้วย **publishable key** ของโปรเจกต์ ห้ามใช้ service_role หรือ secret key ค่านี้จะอยู่ใน JavaScript ฝั่งผู้ใช้ตามรูปแบบ Supabase client และข้อมูลถูกควบคุมด้วย RLS
+4. `VITE_SUPABASE_URL` มีค่าเริ่มต้นเป็นโปรเจกต์ที่ระบุไว้แล้ว สามารถตั้ง repository variable เพื่อเปลี่ยนได้
+5. Push เข้า `main` หรือไป Actions → Deploy GitHub Pages → Run workflow บน main
+6. URL เมื่อ deploy สำเร็จ: https://cctvnarathiwat.github.io/police14/ (ต้องดูผลสำเร็จของ Actions ก่อนใช้งาน)
+
+หากยังไม่พร้อมเชื่อมฐานข้อมูล สามารถเลือก `demo` ใน Run workflow ได้โดยชัดแจ้ง เป็นเว็บสาธิตข้อมูลจำลองในเบราว์เซอร์เท่านั้น การ push ครั้งถัดไปจะกลับไป build production และต้องมี key ครบ
+
+ทดสอบเส้นทาง Pages ในเครื่อง: `npm run build -- --base=/police14/` แล้ว `npm run preview` เปิด `/police14/` บน URL ของ preview
+
+อ้างอิง: https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages

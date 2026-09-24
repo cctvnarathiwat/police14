@@ -26,3 +26,5 @@
 - GitHub CLI ที่เชื่อมอยู่เป็น `useman02406-afk` และรายงานสิทธิ์ READ ใน `cctvnarathiwat/police14` การอัปโหลดต้องให้สิทธิ์เขียนหรือเปลี่ยนไปใช้บัญชีที่มีสิทธิ์
 
 รายละเอียดขอบเขตและงานเชื่อมต่อที่ยังต้องทำอยู่ใน README.md
+
+GitHub Pages: production build ผ่านด้วย `npm run build -- --base=/police14/` ตรวจ index.html แล้ว assets อ้าง `/police14/assets/` ถูกต้อง เพิ่ม workflow build/test/upload/deploy พร้อมตรวจ key ก่อน production deploy ยังไม่ได้ทดสอบบน GitHub runner เพราะบัญชีมีสิทธิ์ READ และยัง push ไม่ได้
