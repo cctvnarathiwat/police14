@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Shield,
   LayoutDashboard,
@@ -67,6 +67,35 @@ const nav = [
   { id: "audit", label: "ประวัติการทำงาน", icon: Activity },
   { id: "settings", label: "ตั้งค่าระบบ", icon: Settings },
 ];
+function WorkspaceIdentity() {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  return (
+    <div className="workspace-identity">
+      <strong>ระบบบริหารข้อมูลกล้องวงจรปิด CCTV</strong>
+      <p>
+        สภ.เมืองนราธิวาส ·{" "}
+        {now.toLocaleDateString("th-TH", {
+          timeZone: "Asia/Bangkok",
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })}
+        <time dateTime={now.toISOString()}>
+          เวลา{" "}
+          {now.toLocaleTimeString("th-TH", {
+            timeZone: "Asia/Bangkok",
+            hour12: false,
+          })}{" "}
+          น.
+        </time>
+      </p>
+    </div>
+  );
+}
 function Login() {
   const [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
@@ -76,11 +105,11 @@ function Login() {
     <div className="login-page">
       <div className="login-card">
         <div className="brand-icon">
-          <Shield size={30} />
+          <Camera size={30} />
         </div>
         <span className="eyebrow">NARATHIWAT · POLICE 14</span>
-        <h1>CCTV Command Center</h1>
-        <p>ศูนย์ CCTV สภ.เมืองนราธิวาส</p>
+        <h1>CCTV POLICE14 DATACENTER</h1>
+        <p>ระบบข้อมูลกล้องวงจรปิด สภ.เมืองนราธิวาส</p>
         {!supabase ? (
           <div className="setup-note">
             <h3>รอเชื่อมต่อ Supabase</h3>
@@ -117,6 +146,7 @@ function Login() {
                 type="email"
                 autoComplete="username"
                 required
+                placeholder="อีเมลเจ้าหน้าที่"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -127,18 +157,36 @@ function Login() {
                 type="password"
                 autoComplete="current-password"
                 required
+                placeholder="รหัสผ่าน"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </label>
             {error && <p className="error">{error}</p>}
             <button className="button primary" disabled={busy}>
-              {busy ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ศูนย์ปฏิบัติการ"}
+              {busy ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
               <ChevronRight size={16} />
             </button>
             <small>ใช้บัญชีที่ผู้ดูแลกำหนดสิทธิ์ให้เท่านั้น</small>
           </form>
         )}
+        <details className="login-support">
+          <summary>ลืมบัญชีผู้ใช้งาน หรือรหัสผ่าน</summary>
+          <p>
+            ติดต่อผู้ดูแลระบบของหน่วยงานเพื่อยืนยันบัญชีและขอตั้งรหัสผ่านใหม่
+            ใช้อีเมลที่ได้รับสิทธิ์ในการเข้าสู่ระบบ
+          </p>
+        </details>
+      </div>
+      <div className="photo-credit">
+        ภาพ Lake Ingalls โดย Sergei Akulich ·{" "}
+        <a
+          href="https://commons.wikimedia.org/wiki/File:Mountains_reflected_in_a_lake_(Unsplash).jpg"
+          target="_blank"
+          rel="noreferrer"
+        >
+          CC0 / Wikimedia Commons
+        </a>
       </div>
     </div>
   );
@@ -286,6 +334,9 @@ function Workspace() {
                 </div>
               )}
               <button
+                title={item.label}
+                aria-label={item.label}
+                aria-current={page === item.id ? "page" : undefined}
                 className={page === item.id ? "active" : ""}
                 onClick={() => navigate(item.id)}
               >
@@ -312,6 +363,13 @@ function Workspace() {
           </span>
         </div>
       </aside>
+      {menu && (
+        <button
+          className="menu-scrim"
+          aria-label="ปิดเมนู"
+          onClick={() => setMenu(false)}
+        />
+      )}
       <div className="workspace">
         <header className="topbar">
           <button
@@ -321,11 +379,7 @@ function Workspace() {
           >
             <Menu size={19} />
           </button>
-          <div className="breadcrumb">
-            ศูนย์ปฏิบัติการ
-            <ChevronRight size={13} />
-            <strong>{title}</strong>
-          </div>
+          <WorkspaceIdentity />
           <div className="global-search">
             <Search size={16} />
             <input

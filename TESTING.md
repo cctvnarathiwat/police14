@@ -18,13 +18,18 @@
 - ตรวจ Dashboard และ Area Analysis ใน iframe ขนาด 390px (content viewport 375px หลังหัก scrollbar) ไม่มี horizontal overflow และเมนูมือถือเปิด/เลือกหน้าได้
 - ทำ production preview ที่ `http://127.0.0.1:5173` เพื่อทดลองในเครื่อง
 
-## ยังไม่ได้ตรวจบนระบบจริง
+## ## ตรวจระบบจริงและธีมใหม่ 25 กันยายน 2569
 
-- Supabase connector ตอบว่าไม่มีสิทธิ์ใน `ruzhxkgqpszzhalcgkgi`; หน้า dashboard ในเบราว์เซอร์ต้องเข้าสู่ระบบ จึงยังไม่ได้รัน migration, Security Advisors หรือทดสอบ Auth/Storage HTTP บนโปรเจกต์จริง
-- ยังไม่ทดสอบข้อมูลกล้องจริง, stream gateway, วิดีโอจากเครื่องบันทึกจริง หรือ workload หลายผู้ใช้
+- Supabase migration ติดตั้งผ่าน SQL Editor แล้ว: RLS เปิดทั้ง 4 ตาราง, 8 policies, private evidence bucket และ anonymous ไม่มีสิทธิ์อ่านข้อมูล/เรียก RPC
+- ทดสอบ HTTP: anonymous records ตอบ 401 permission denied และ Auth settings ตอบ 200
+- Security Advisor: 0 errors, 1 warning เรื่อง Leaked Password Protection Disabled
+- GitHub Pages production deployment ผ่านแล้ว และตั้ง repository variables สำหรับ publishable key / URL แล้ว
+- ธีมสว่างตามภาพอ้างอิง: glass login, sidebar, pastel summary, striped tables, detail modal และเครื่องมือแผนที่ รองรับมือถือ 390px
+- ตรวจหน้า login ด้วยการเชื่อม Supabase จริง และ Dashboard/แผนที่/รายละเอียดในโหมด demo; ไม่คัดลอกข้อมูลบุคคลหรือข้อมูลปฏิบัติการจากภาพตัวอย่าง
+- Build และ unit tests ทั้ง 7 ข้อผ่านหลังปรับ UI
+
+## ขอบเขตที่ยังไม่ได้ตรวจ
+
+- ยังไม่ทดสอบ login ด้วยรหัสผ่านของผู้ใช้ หรือการอัปโหลดหลักฐานบน production
+- ยังไม่ทดสอบ stream gateway, วิดีโอจากเครื่องบันทึกจริง หรือ workload หลายผู้ใช้
 - PDF ใช้หน้าพิมพ์ของ browser ยังไม่ได้ตรวจไฟล์ PDF ส่งออกทุกขนาดกระดาษ
-- GitHub CLI ที่เชื่อมอยู่เป็น `useman02406-afk` และรายงานสิทธิ์ READ ใน `cctvnarathiwat/police14` การอัปโหลดต้องให้สิทธิ์เขียนหรือเปลี่ยนไปใช้บัญชีที่มีสิทธิ์
-
-รายละเอียดขอบเขตและงานเชื่อมต่อที่ยังต้องทำอยู่ใน README.md
-
-GitHub Pages: production build ผ่านด้วย `npm run build -- --base=/police14/` ตรวจ index.html แล้ว assets อ้าง `/police14/assets/` ถูกต้อง เพิ่ม workflow build/test/upload/deploy พร้อมตรวจ key ก่อน production deploy ยังไม่ได้ทดสอบบน GitHub runner เพราะบัญชีมีสิทธิ์ READ และยัง push ไม่ได้

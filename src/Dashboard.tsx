@@ -104,6 +104,68 @@ export default function Dashboard({
           </button>
         ))}
       </div>
+      <section className="panel summary-panel">
+        <div className="panel-heading">
+          <h3>
+            <Camera size={18} />
+            สถานะกล้องวงจรปิด CCTV แยกตามประเภทกล้อง
+          </h3>
+          <span className="muted">ข้อมูลจากทะเบียน</span>
+        </div>
+        <div className="table-scroll">
+          <table className="summary-table">
+            <thead>
+              <tr>
+                <th scope="col">ประเภทกล้อง</th>
+                <th scope="col">ออนไลน์</th>
+                <th scope="col">ออฟไลน์</th>
+                <th scope="col">ซ่อมบำรุง</th>
+                <th scope="col">รวม</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ...new Set([
+                  "Fixed",
+                  "PTZ",
+                  ...cameras.map((c) => s(c, "type") || "ไม่ระบุ"),
+                ]),
+              ].map((type) => {
+                const group = cameras.filter(
+                  (c) => (s(c, "type") || "ไม่ระบุ") === type,
+                );
+                return (
+                  <tr key={type}>
+                    <th scope="row">
+                      <span className="table-label">
+                        <Camera size={20} />
+                        {type}
+                      </span>
+                    </th>
+                    {["online", "offline", "maintenance"].map((status) => (
+                      <td key={status}>
+                        {group.filter((c) => s(c, "status") === status).length}
+                      </td>
+                    ))}
+                    <td>
+                      <strong>{group.length}</strong>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr>
+                <th scope="row">รวมทั้งหมด</th>
+                <td>{online}</td>
+                <td>{offline}</td>
+                <td>{maintenance}</td>
+                <td>{cameras.length}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </section>
       <div className="dashboard-grid">
         <section className="panel dashboard-map">
           <div className="panel-heading">

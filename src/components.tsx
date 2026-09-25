@@ -59,6 +59,7 @@ export function Modal({
   }, []);
   return (
     <dialog
+      aria-label={title}
       ref={ref}
       onCancel={onClose}
       onClick={(e) => {
@@ -488,7 +489,17 @@ export function Details({
                 {f.ref
                   ? (rows.find((x) => x.id === r.data[f.key])?.data.title ??
                     "—")
-                  : String(r.data[f.key] ?? "—")}
+                  : r.data[f.key] == null || r.data[f.key] === ""
+                    ? "—"
+                    : f.type === "datetime-local"
+                      ? dateTime(String(r.data[f.key]))
+                      : f.type === "date"
+                        ? new Date(String(r.data[f.key])).toLocaleDateString(
+                            "th-TH",
+                          )
+                        : ["lat", "lng"].includes(f.key)
+                          ? Number(r.data[f.key]).toFixed(6)
+                          : String(r.data[f.key])}
               </dd>
             </div>
           ))}
@@ -512,7 +523,9 @@ export function Details({
         {children.length > 0 && (
           <>
             <h3>ประวัติและข้อมูลที่เกี่ยวข้อง</h3>
-            <RecordTable rows={children} onOpen={onOpen} />
+            <div className="table-scroll">
+              <RecordTable rows={children} onOpen={onOpen} />
+            </div>
           </>
         )}
         {error && <p className="error">{error}</p>}
