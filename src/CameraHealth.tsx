@@ -1,3 +1,4 @@
+import { CAMERA_TYPES } from "./domain";
 import { useState } from "react";
 import { Camera, Grid2X2, List, Map, Plus, Search } from "lucide-react";
 import { useStore } from "./context";
@@ -93,8 +94,9 @@ export default function CameraHealth({
           onChange={(e) => filter(setType, e.target.value)}
         >
           <option value="">ทุกประเภท</option>
-          <option>Fixed</option>
-          <option>PTZ</option>
+          {CAMERA_TYPES.map((type) => (
+            <option key={type}>{type}</option>
+          ))}
         </select>
         {canWrite(profile!.role, "camera") && (
           <button className="button primary push" onClick={onNew}>

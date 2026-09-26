@@ -1,3 +1,4 @@
+import { CAMERA_TYPES } from "./domain";
 import {
   Camera,
   Wifi,
@@ -126,8 +127,7 @@ export default function Dashboard({
             <tbody>
               {[
                 ...new Set([
-                  "Fixed",
-                  "PTZ",
+                  ...CAMERA_TYPES,
                   ...cameras.map((c) => s(c, "type") || "ไม่ระบุ"),
                 ]),
               ].map((type) => {

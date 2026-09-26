@@ -43,7 +43,7 @@ export function makeDemo(): RecordRow[] {
       lng: CENTER[1] + Math.cos(i * 2.399) * (0.002 + i * 0.00042),
       area: i % 3 === 0 ? "บางนาค" : i % 3 === 1 ? "บางนรา" : "เทศบาลเมือง",
       agency: "สภ.เมืองนราธิวาส",
-      type: i % 4 === 0 ? "PTZ" : "Fixed",
+      type: ["กอ.รมน.", "มหาดไทย", "WI-FI", "4G", "ยุทธวิธี", "อื่นๆ"][i % 6],
       bearing: (i * 37) % 360,
       fov: 80,
       range: 150,

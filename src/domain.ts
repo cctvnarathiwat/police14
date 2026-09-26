@@ -9,6 +9,14 @@ import {
   destination,
 } from "@turf/turf";
 
+export const CAMERA_TYPES = [
+  "กอ.รมน.",
+  "มหาดไทย",
+  "WI-FI",
+  "4G",
+  "ยุทธวิธี",
+  "อื่นๆ",
+];
 export type Kind =
   | "camera"
   | "incident"
@@ -119,7 +127,7 @@ export const definitions: Record<Kind, Definition> = {
         key: "type",
         label: "ประเภทกล้อง",
         type: "select",
-        options: ["Fixed", "PTZ"],
+        options: CAMERA_TYPES,
       },
       { key: "agency", label: "หน่วยงานเจ้าของ" },
       { key: "ip", label: "IP / ข้อมูลเชื่อมต่อ (ไม่ใส่รหัสผ่าน)" },

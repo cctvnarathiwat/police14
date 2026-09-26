@@ -1,3 +1,4 @@
+import { CAMERA_TYPES } from "./domain";
 import { useMemo, useState } from "react";
 import {
   Crosshair,
@@ -399,8 +400,9 @@ export default function Analysis({
               onChange={(e) => setCameraType(e.target.value)}
             >
               <option value="">ทุกประเภท</option>
-              <option>Fixed</option>
-              <option>PTZ</option>
+              {CAMERA_TYPES.map((type) => (
+                <option key={type}>{type}</option>
+              ))}
             </select>
             <select
               aria-label="หน่วยงานกล้อง"
