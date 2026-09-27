@@ -16,6 +16,7 @@ const migration = (await readdir("supabase/migrations")).find((f) =>
   f.endsWith("_command_center.sql"),
 );
 await db.exec(await readFile(`supabase/migrations/${migration}`, "utf8"));
+await db.exec(await readFile("supabase/camera-statuses.sql", "utf8"));
 const org = "00000000-0000-4000-8000-000000000001",
   other = "00000000-0000-4000-8000-000000000002";
 const admin = "10000000-0000-4000-8000-000000000001",
@@ -216,4 +217,11 @@ await assert.rejects(() => db.query("select * from public.cc_records"));
 console.log(
   "PASS: migration, organization isolation, RBAC, protected identities, validation, audit, private storage, revoked membership, anonymous denial",
 );
+for (const status of ["disposed", "inventory"]) {
+ const result = await as(admin, `update public.cc_records set data=jsonb_set(data,'{status}','"${status}"') where id='${cam}' returning data->>'status' as status`);
+ assert.equal(result.rows[0].status, status);
+}
+console.log("PASS: camera disposed and inventory statuses save successfully");
 await db.close();
+
+

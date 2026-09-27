@@ -118,7 +118,7 @@ export const definitions: Record<Kind, Definition> = {
     name: "กล้อง",
     plural: "ทะเบียนกล้อง CCTV",
     prefix: "CAM",
-    statuses: ["online", "offline", "maintenance"],
+    statuses: ["online", "offline", "maintenance", "disposed", "inventory"],
     fields: [
       title,
       area,
@@ -306,7 +306,7 @@ export const definitions: Record<Kind, Definition> = {
 export const statusLabels: Record<string, string> = {
   online: "Online",
   offline: "Offline",
-  maintenance: "ซ่อมบำรุง",
+  maintenance: "ซ่อมบำรุง", disposed: "จำหน่าย", inventory: "คงคลัง",
   open: "รับแจ้ง / เปิดใหม่",
   investigating: "กำลังตรวจสอบ",
   in_progress: "กำลังดำเนินการ",
@@ -459,3 +459,4 @@ export function displayCode(r: RecordRow): string {
   if (r.kind === "camera" && uid && uid !== "-") return uid;
   return r.kind === "camera" && /^CSV-(?:DUP-)?[a-f0-9]{16}(?:-\d+)?$/i.test(code) ? "" : code;
 }
+

@@ -63,7 +63,7 @@ export default function CameraHealth({
           <option value="">ทุกสถานะ</option>
           <option value="online">Online</option>
           <option value="offline">Offline</option>
-          <option value="maintenance">ซ่อมบำรุง</option>
+          <option value="maintenance">ซ่อมบำรุง</option><option value="disposed">จำหน่าย</option><option value="inventory">คงคลัง</option>
         </select>
         <select
           aria-label="พื้นที่กล้อง"
@@ -195,4 +195,5 @@ export default function CameraHealth({
     </>
   );
 }
+
 

@@ -27,7 +27,7 @@ export default function Dashboard({
     incidents = rows.filter((r) => r.kind === "incident");
   const online = cameras.filter((r) => s(r, "status") === "online").length,
     offline = cameras.filter((r) => s(r, "status") === "offline").length,
-    maintenance = cameras.length - online - offline;
+    maintenance = cameras.filter((r) => s(r, "status") === "maintenance").length, disposed = cameras.filter((r) => s(r, "status") === "disposed").length, inventory = cameras.filter((r) => s(r, "status") === "inventory").length;
   const recent = [...rows]
     .filter((r) => ["incident", "job", "case", "sighting"].includes(r.kind))
     .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
@@ -121,7 +121,7 @@ export default function Dashboard({
                 <th scope="col">ประเภทกล้อง</th>
                 <th scope="col">ออนไลน์</th>
                 <th scope="col">ออฟไลน์</th>
-                <th scope="col">ซ่อมบำรุง</th>
+                <th scope="col">ซ่อมบำรุง</th><th scope="col">จำหน่าย</th><th scope="col">คงคลัง</th>
                 <th scope="col">รวม</th>
               </tr>
             </thead>
@@ -143,7 +143,7 @@ export default function Dashboard({
                         {type}
                       </span>
                     </th>
-                    {["online", "offline", "maintenance"].map((status) => (
+                    {["online", "offline", "maintenance", "disposed", "inventory"].map((status) => (
                       <td key={status}>
                         {group.filter((c) => s(c, "status") === status).length}
                       </td>
@@ -160,7 +160,7 @@ export default function Dashboard({
                 <th scope="row">รวมทั้งหมด</th>
                 <td>{online}</td>
                 <td>{offline}</td>
-                <td>{maintenance}</td>
+                <td>{maintenance}</td><td>{disposed}</td><td>{inventory}</td>
                 <td>{cameras.length}</td>
               </tr>
             </tfoot>
@@ -249,7 +249,7 @@ export default function Dashboard({
             <div
               className="donut"
               style={{
-                background: `conic-gradient(#35d7ac 0 ${cameras.length ? (online / cameras.length) * 100 : 0}%, #fb7185 0 ${cameras.length ? ((online + offline) / cameras.length) * 100 : 0}%, #fbbf24 0 100%)`,
+                background: `conic-gradient(#35d7ac 0 ${cameras.length ? (online / cameras.length) * 100 : 0}%, #fb7185 0 ${cameras.length ? ((online + offline) / cameras.length) * 100 : 0}%, #fbbf24 0 ${cameras.length ? ((online + offline + maintenance) / cameras.length) * 100 : 0}%, #94a3b8 0 ${cameras.length ? ((online + offline + maintenance + disposed) / cameras.length) * 100 : 0}%, #60a5fa 0 100%)`,
               }}
             >
               <div>
@@ -266,7 +266,7 @@ export default function Dashboard({
               {[
                 ["Online", online, "green"],
                 ["Offline", offline, "red"],
-                ["Maintenance", maintenance, "amber"],
+                ["Maintenance", maintenance, "amber"], ["จำหน่าย", disposed, "gray"], ["คงคลัง", inventory, "blue"],
               ].map(([label, count, color]) => (
                 <div key={label}>
                   <span>
@@ -354,4 +354,5 @@ function RouteArt() {
     </svg>
   );
 }
+
 

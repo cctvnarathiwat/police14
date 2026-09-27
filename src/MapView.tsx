@@ -28,7 +28,7 @@ const color = (r: RecordRow) =>
     ? "#fb7185"
     : s(r, "status") === "maintenance"
       ? "#fbbf24"
-      : r.kind === "incident"
+      : s(r, "status") === "disposed" ? "#94a3b8" : s(r, "status") === "inventory" ? "#60a5fa" : r.kind === "incident"
         ? "#60a5fa"
         : "#35d7ac";
 function Events({
@@ -263,4 +263,5 @@ export default function MapView(p: Props) {
     </div>
   );
 }
+
 

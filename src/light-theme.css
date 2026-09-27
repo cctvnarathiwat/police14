@@ -1151,3 +1151,5 @@ dd {
 .site-camera-list { max-height: 420px; overflow-y: auto; overflow-wrap: anywhere; }
 .site-camera-list article { padding: 12px 0; border-bottom: 1px solid #dce5ed; display: grid; gap: 7px; }
 .site-camera-list .button { justify-self: start; }
+
+.badge.disposed { background: #e2e8f0; color: #475569; } .badge.inventory { background: #dbeafe; color: #1d4ed8; } .dot.gray { background: #94a3b8; } .dot.blue { background: #60a5fa; }
