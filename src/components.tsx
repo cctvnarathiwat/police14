@@ -337,7 +337,7 @@ export function RecordTable({
             <tr key={r.id}>
               <td>
                 <button className="record-link" onClick={() => onOpen(r)}>
-                  <span className="mono">{displayCode(r)}</span>
+                  {displayCode(r) && <span className="mono">{displayCode(r)}</span>}
                   <strong>{s(r, "title")}</strong>
                 </button>
               </td>
@@ -482,7 +482,7 @@ export function Details({
     <Modal title={s(r, "title")} onClose={onClose}>
       <div className="detail-body">
         <div className="toolbar">
-          <span className="mono">{displayCode(r)}</span>
+          {displayCode(r) && <span className="mono">{displayCode(r)}</span>}
           <Badge status={s(r, "status")} />
         </div>
         <dl>
@@ -514,7 +514,7 @@ export function Details({
             {siteCameras.map((camera, index) => (
               <article key={camera.id}>
                 <strong>{index + 1}. {s(camera, "title")}</strong>
-                <div>UID: {s(camera, "source_uid") && s(camera, "source_uid") !== "-" ? s(camera, "source_uid") : "ไม่ระบุ"}</div>
+                <div>UID: {displayCode(camera) || "ไม่ระบุ"}</div>
                 
                 <div>{s(camera, "type")} · <Badge status={s(camera, "status")} /></div>
                 <button className="button" disabled={camera.id === r.id} onClick={() => onOpen(camera)}>
@@ -590,6 +590,7 @@ export function Details({
     </Modal>
   );
 }
+
 
 
 

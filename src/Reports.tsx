@@ -63,7 +63,7 @@ export default function Reports({
       if (profile!.role === "viewer")
         throw new Error("สิทธิ์ Viewer ไม่สามารถส่งออกรายงาน");
       await log(`EXPORT_${format.toUpperCase()}`, caseId || undefined);
-      const data = [columns, ...items.map((r) => columns.map((c) => s(r, c)))];
+      const data = [columns, ...items.map((r) => columns.map((c) => c === "code" ? displayCode(r) : s(r, c)))];
       if (format === "print") {
         window.print();
       } else if (format === "csv") {

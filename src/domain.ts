@@ -455,5 +455,7 @@ export function download(blob: Blob, name: string) {
 
 export function displayCode(r: RecordRow): string {
   const code = s(r, "code");
+  const uid = s(r, "source_uid").trim();
+  if (r.kind === "camera" && uid && uid !== "-") return uid;
   return r.kind === "camera" && /^CSV-(?:DUP-)?[a-f0-9]{16}(?:-\d+)?$/i.test(code) ? "" : code;
 }
