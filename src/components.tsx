@@ -174,7 +174,7 @@ export function Editor({
     >
       <form onSubmit={submit}>
         <div className="form-grid">
-          <label>
+          <label style={record && !displayCode(record) ? { display: "none" } : undefined}>
             รหัสอ้างอิง
             <input
               required
@@ -590,5 +590,6 @@ export function Details({
     </Modal>
   );
 }
+
 
 

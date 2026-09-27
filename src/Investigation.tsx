@@ -1,3 +1,4 @@
+import { displayCode } from "./domain";
 import { useEffect, useRef, useState } from "react";
 import {
   Plus,
@@ -119,7 +120,7 @@ export default function Investigation({
           <option value="">เลือกแฟ้ม</option>
           {cases.map((c) => (
             <option key={c.id} value={c.id}>
-              {s(c, "code")} · {s(c, "title")}
+              {displayCode(c)} · {s(c, "title")}
             </option>
           ))}
         </select>
@@ -173,7 +174,7 @@ export default function Investigation({
                         setBoard(false);
                       }}
                     >
-                      <span className="mono">{s(c, "code")}</span>
+                      <span className="mono">{displayCode(c)}</span>
                       <strong>{s(c, "title")}</strong>
                     </button>
                     <p>
@@ -189,7 +190,7 @@ export default function Investigation({
                     </small>
                     {write && (
                       <select
-                        aria-label={`เปลี่ยนสถานะ ${s(c, "code")}`}
+                        aria-label={`เปลี่ยนสถานะ ${displayCode(c)}`}
                         value={status}
                         onChange={(e) => void move(c, e.target.value)}
                       >
@@ -211,7 +212,7 @@ export default function Investigation({
         <>
           <div className="case-banner">
             <div>
-              <span className="mono">{s(current, "code")}</span>
+              <span className="mono">{displayCode(current)}</span>
               <h2>{s(current, "title")}</h2>
               <span className="muted">
                 {s(current, "area")} · ผู้รับผิดชอบ {s(current, "assignee")}
@@ -527,7 +528,7 @@ export function EvidenceViewer({
           file_name: file.name,
           mime_type: file.type,
           file_size: file.size,
-          notes: `ต้นฉบับ ${s(r, "code")} เวลาในคลิป ${v.currentTime.toFixed(2)} วินาที`,
+          notes: `ต้นฉบับ ${displayCode(r)} เวลาในคลิป ${v.currentTime.toFixed(2)} วินาที`,
         },
         undefined,
         r.parent_id,
@@ -631,7 +632,7 @@ export function EvidenceViewer({
                     camera_id: r.data.camera_id,
                     lat: c?.data.lat,
                     lng: c?.data.lng,
-                    notes: `อ้างอิง ${s(r, "code")} ${isVideo ? `เวลาในคลิป ${elapsed}s` : ""}`,
+                    notes: `อ้างอิง ${displayCode(r)} ${isVideo ? `เวลาในคลิป ${elapsed}s` : ""}`,
                   },
                   r.parent_id!,
                 );
@@ -645,3 +646,4 @@ export function EvidenceViewer({
     </Modal>
   );
 }
+

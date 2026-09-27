@@ -1,3 +1,4 @@
+import { displayCode } from "./domain";
 import { useState } from "react";
 import { Download, Printer, FileSpreadsheet } from "lucide-react";
 import { useStore, demo } from "./context";
@@ -143,7 +144,7 @@ export default function Reports({
               .filter((r) => r.kind === "case")
               .map((r) => (
                 <option key={r.id} value={r.id}>
-                  {s(r, "code")}
+                  {displayCode(r)}
                 </option>
               ))}
           </select>
@@ -233,7 +234,7 @@ export default function Reports({
           {items.map((r) => (
             <article key={r.id}>
               <h3>
-                {s(r, "code")} · {s(r, "title")}
+                {displayCode(r)} · {s(r, "title")}
               </h3>
               {definitions[kind].fields.map((f) => (
                 <p key={f.key}>
@@ -253,3 +254,4 @@ export default function Reports({
     </>
   );
 }
+

@@ -1,3 +1,4 @@
+import { displayCode } from "./domain";
 import { CAMERA_TYPES } from "./domain";
 import {
   Camera,
@@ -215,7 +216,7 @@ export default function Dashboard({
                   </span>
                   <div>
                     <small>
-                      {s(r, "code")} · {dateTime(r.updated_at)}
+                      {displayCode(r)} · {dateTime(r.updated_at)}
                     </small>
                     <strong>{s(r, "title")}</strong>
                     <Badge status={s(r, "status")} />
@@ -353,3 +354,4 @@ function RouteArt() {
     </svg>
   );
 }
+

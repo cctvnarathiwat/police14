@@ -1,3 +1,4 @@
+import { displayCode } from "./domain";
 import { useEffect, useState } from "react";
 import {
   Shield,
@@ -395,7 +396,7 @@ function Workspace() {
                   searchResults.map((r) => (
                     <button key={r.id} onClick={() => open(r)}>
                       <small>
-                        {s(r, "code")} · {definitions[r.kind].name}
+                        {displayCode(r)} · {definitions[r.kind].name}
                       </small>
                       <strong>{s(r, "title")}</strong>
                     </button>
@@ -653,7 +654,7 @@ function Workspace() {
                   <TriangleAlert size={19} />
                   <div>
                     <strong>
-                      {s(r, "code")} · {s(r, "title")}
+                      {displayCode(r)} · {s(r, "title")}
                     </strong>
                     <small>
                       {r.kind === "camera"
@@ -685,3 +686,4 @@ export default function App() {
     </Provider>
   );
 }
+

@@ -1,3 +1,4 @@
+import { displayCode } from "./domain";
 import { CAMERA_TYPES } from "./domain";
 import { useMemo, useState } from "react";
 import {
@@ -596,7 +597,7 @@ export default function Analysis({
                     onClick={() => pick(c)}
                   >
                     <div>
-                      <span className="mono">{s(c, "code")}</span>
+                      <span className="mono">{displayCode(c)}</span>
                       <small>
                         {Number.isFinite(c.dist)
                           ? `${Math.round(c.dist).toLocaleString()} ม.`
@@ -629,7 +630,7 @@ export default function Analysis({
                         .filter((r) => r.kind === "case")
                         .map((r) => (
                           <option key={r.id} value={r.id}>
-                            {s(r, "code")}
+                            {displayCode(r)}
                           </option>
                         ))}
                     </select>
@@ -655,3 +656,4 @@ export default function Analysis({
     </>
   );
 }
+
