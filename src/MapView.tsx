@@ -7,11 +7,14 @@ import {
   Polyline,
   Polygon,
   Tooltip,
+  Popup,
   useMapEvents,
   useMap,
 } from "react-leaflet";
 import {
   CENTER,
+  groupCameraSites,
+  statusLabels,
   coverage,
   position,
   s,
@@ -189,13 +192,16 @@ export default function MapView(p: Props) {
             />
           )),
         )}
-        {p.cameras.map((c) => (
+        {groupCameraSites(p.cameras).map((site) => {
+          const c = site[0];
+          const selected = site.some((r) => r.id === p.selected);
+          return (
           <CircleMarker
             key={c.id}
             center={position(c)}
-            radius={p.selected === c.id ? 10 : 5}
+            radius={selected ? 12 : site.length > 1 ? 9 : 5}
             pathOptions={{
-              color: p.selected === c.id ? "white" : color(c),
+              color: selected ? "white" : color(c),
               weight: 2,
               fillColor: color(c),
               fillOpacity: 0.9,
@@ -203,7 +209,7 @@ export default function MapView(p: Props) {
             eventHandlers={{
               click: (e) => {
                 e.originalEvent.stopPropagation();
-                p.onSelect?.(c);
+                if (site.length === 1) p.onSelect?.(c);
               },
             }}
           >
@@ -211,9 +217,27 @@ export default function MapView(p: Props) {
               <b>{s(c, "code")}</b>
               <br />
               {s(c, "title")}
+              {site.length > 1 && <><br />{site.length} กล้อง ณ พิกัดนี้ · คลิกดูทุก UID</>}
             </Tooltip>
+            {site.length > 1 && (
+              <Popup minWidth={260} maxWidth={360}>
+                <section className="site-camera-list">
+                  <h3>กล้อง ณ พิกัดนี้ ({site.length} ตัว)</h3>
+                  <p>{position(c).join(", ")} · ตามตัวกรองปัจจุบัน</p>
+                  {site.map((camera, index) => (
+                    <article key={camera.id}>
+                      <strong>{index + 1}. {s(camera, "title")}</strong>
+                      <div>UID: {s(camera, "source_uid") && s(camera, "source_uid") !== "-" ? s(camera, "source_uid") : s(camera, "code")}</div>
+                      <div>{s(camera, "type")} · {statusLabels[s(camera, "status")] ?? s(camera, "status")}</div>
+                      {p.onSelect && <button className="button" onClick={() => p.onSelect?.(camera)}>รายละเอียดกล้องนี้</button>}
+                    </article>
+                  ))}
+                </section>
+              </Popup>
+            )}
           </CircleMarker>
-        ))}
+          );
+        })}
         {p.incidents?.map((c) => (
           <CircleMarker
             key={c.id}

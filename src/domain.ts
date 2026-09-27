@@ -332,6 +332,23 @@ export const hasPosition = (r: RecordRow) =>
   Number.isFinite(n(r, "lat")) &&
   Number.isFinite(n(r, "lng"));
 export const CENTER: Point = [6.4264, 101.8231];
+// Exact numeric coordinates only: do not merge nearby but distinct installations.
+export function cameraSiteKey(r: RecordRow): string {
+  return r.kind === "camera" && hasPosition(r) &&
+    s(r, "lat").trim() !== "" && s(r, "lng").trim() !== ""
+    ? `${r.org_id}:${n(r, "lat")}:${n(r, "lng")}`
+    : `record:${r.id}`;
+}
+export function groupCameraSites(rows: RecordRow[]): RecordRow[][] {
+  const sites = new Map<string, RecordRow[]>();
+  for (const r of rows) {
+    const key = cameraSiteKey(r);
+    const site = sites.get(key) ?? [];
+    site.push(r);
+    sites.set(key, site);
+  }
+  return [...sites.values()];
+}
 export const toGeo = ([lat, lng]: Point): [number, number] => [lng, lat];
 export const meters = (a: Point, b: Point) =>
   distance(point(toGeo(a)), point(toGeo(b)), { units: "meters" });

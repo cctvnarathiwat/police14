@@ -1147,3 +1147,7 @@ dd {
     scroll-behavior: auto !important;
   }
 }
+
+.site-camera-list { max-height: 420px; overflow-y: auto; overflow-wrap: anywhere; }
+.site-camera-list article { padding: 12px 0; border-bottom: 1px solid #dce5ed; display: grid; gap: 7px; }
+.site-camera-list .button { justify-self: start; }

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import {
   canWrite,
+  cameraSiteKey,
   dateTime,
   definitions,
   s,
@@ -466,6 +467,8 @@ export function Details({
   onAdd: (kind: Kind, parent: string) => void;
 }) {
   const { rows, archive, profile } = useStore();
+  const siteCameras = r.kind === "camera" ? rows.filter((c) =>
+    c.kind === "camera" && !c.archived && cameraSiteKey(c) === cameraSiteKey(r)) : [];
   const [error, setError] = useState(""),
     [confirm, setConfirm] = useState(false);
   const children = rows.filter(
@@ -504,6 +507,22 @@ export function Details({
             </div>
           ))}
         </dl>
+        {siteCameras.length > 1 && (
+          <section className="site-camera-list">
+            <h3>กล้องทั้งหมด ณ พิกัดเดียวกัน ({siteCameras.length} ตัว)</h3>
+            {siteCameras.map((camera, index) => (
+              <article key={camera.id}>
+                <strong>{index + 1}. {s(camera, "title")}</strong>
+                <div>UID: {s(camera, "source_uid") && s(camera, "source_uid") !== "-" ? s(camera, "source_uid") : "ไม่ระบุ"}</div>
+                <div>รหัสอ้างอิง: {s(camera, "code")}</div>
+                <div>{s(camera, "type")} · <Badge status={s(camera, "status")} /></div>
+                <button className="button" disabled={camera.id === r.id} onClick={() => onOpen(camera)}>
+                  {camera.id === r.id ? "กำลังแสดงกล้องนี้" : "รายละเอียดกล้องนี้"}
+                </button>
+              </article>
+            ))}
+          </section>
+        )}
         {r.kind === "evidence" && (
           <p className="hash">SHA-256: {s(r, "sha256")}</p>
         )}
