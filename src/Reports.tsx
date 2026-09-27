@@ -4,6 +4,7 @@ import { Download, Printer, FileSpreadsheet } from "lucide-react";
 import { useStore, demo } from "./context";
 import {
   definitions,
+  statusLabels,
   download,
   csvCell,
   s,
@@ -23,6 +24,7 @@ export default function Reports({
 }) {
   const { rows, log, profile } = useStore();
   const [kind, setKind] = useState<Kind>("camera"),
+    [status, setStatus] = useState(""),
     [from, setFrom] = useState(""),
     [to, setTo] = useState(""),
     [caseId, setCaseId] = useState(""),
@@ -31,6 +33,7 @@ export default function Reports({
   const items = rows.filter(
     (r) =>
       r.kind === kind &&
+      (!status || s(r, "status") === status) &&
       (!caseId || r.id === caseId || r.parent_id === caseId) &&
       (!from ||
         Date.parse(s(r, "occurred_at") || r.created_at) >=
@@ -63,7 +66,7 @@ export default function Reports({
       if (profile!.role === "viewer")
         throw new Error("สิทธิ์ Viewer ไม่สามารถส่งออกรายงาน");
       await log(`EXPORT_${format.toUpperCase()}`, caseId || undefined);
-      const data = [columns, ...items.map((r) => columns.map((c) => c === "code" ? displayCode(r) : s(r, c)))];
+      const data = [columns, ...items.map((r) => columns.map((c) => c === "code" ? displayCode(r) : c === "status" ? (statusLabels[s(r, c)] ?? s(r, c)) : s(r, c)))];
       if (format === "print") {
         window.print();
       } else if (format === "csv") {
@@ -107,6 +110,7 @@ export default function Reports({
             onChange={(e) => {
               setKind(e.target.value as Kind);
               setCaseId("");
+              setStatus("");
             }}
           >
             {Object.entries(definitions).map(([k, d]) => (
@@ -114,6 +118,13 @@ export default function Reports({
                 {d.plural}
               </option>
             ))}
+          </select>
+        </label>
+        <label>
+          สถานะ
+          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+            <option value="">ทุกสถานะ</option>
+            {definitions[kind].statuses.map((value) => <option key={value} value={value}>{statusLabels[value] ?? value}</option>)}
           </select>
         </label>
         <label>
@@ -157,6 +168,7 @@ export default function Reports({
             <h2>{definitions[kind].plural}</h2>
             <p className="muted">
               สภ.เมืองนราธิวาส · {items.length} รายการ ·{" "}
+              {status ? `${statusLabels[status]} · ` : "ทุกสถานะ · "}
               {demo ? "ข้อมูลสาธิต" : "ข้อมูลตามสิทธิ์ผู้ใช้งาน"}
             </p>
           </div>

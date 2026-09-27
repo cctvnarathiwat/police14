@@ -188,8 +188,10 @@ export default function Dashboard({
               <i className="dot red" /> Offline {offline}
             </span>
             <span>
-              <i className="dot amber" /> Maintenance {maintenance}
+              <i className="dot amber" /> ซ่อมบำรุง {maintenance}
             </span>
+            <span><i className="dot gray" /> จำหน่าย {disposed}</span>
+            <span><i className="dot blue" /> คงคลัง {inventory}</span>
             <span className="push muted">
               {demo ? "ตำแหน่งจำลอง" : "ตำแหน่งจากทะเบียนกล้อง"}
             </span>

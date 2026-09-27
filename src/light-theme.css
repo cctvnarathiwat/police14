@@ -1153,3 +1153,5 @@ dd {
 .site-camera-list .button { justify-self: start; }
 
 .badge.disposed { background: #e2e8f0; color: #475569; } .badge.inventory { background: #dbeafe; color: #1d4ed8; } .dot.gray { background: #94a3b8; } .dot.blue { background: #60a5fa; }
+
+.map-bottom { flex-wrap: wrap; row-gap: 8px; }
