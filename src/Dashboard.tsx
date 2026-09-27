@@ -15,6 +15,7 @@ import { useStore, demo } from "./context";
 import { dateTime, hasPosition, s, type RecordRow } from "./domain";
 import { Badge, Empty } from "./components";
 import MapView from "./MapView";
+import { inspectCameras } from "./cameraQuality";
 export default function Dashboard({
   onOpen,
   onNavigate,
@@ -38,7 +39,7 @@ export default function Dashboard({
       value: cameras.length,
       icon: Camera,
       tone: "blue",
-      note: "กล้องในพื้นที่รับผิดชอบ",
+      note: `${inspectCameras(cameras).sites.length} จุดพิกัดในพื้นที่รับผิดชอบ`,
       page: "camera",
     },
     {

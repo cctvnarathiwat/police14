@@ -6,6 +6,7 @@ import { useStore } from "./context";
 import { canWrite, dateTime, hasPosition, s, type RecordRow } from "./domain";
 import { Badge, Empty, RecordTable } from "./components";
 import MapView from "./MapView";
+import { inspectCameras } from "./cameraQuality";
 export default function CameraHealth({
   onOpen,
   onNew,
@@ -20,9 +21,18 @@ export default function CameraHealth({
     [area, setArea] = useState(""),
     [agency, setAgency] = useState(""),
     [type, setType] = useState(""),
+    [quality, setQuality] = useState(""),
     [old, setOld] = useState(false),
     [page, setPage] = useState(0);
   const cameras = rows.filter((r) => r.kind === "camera");
+  const checks = inspectCameras(cameras);
+  const qualityOptions = [
+    ["missing", "ยังไม่มี UID", checks.missing],
+    ["duplicate", "UID ซ้ำ", checks.duplicate],
+    ["differentSites", "UID ซ้ำต่างพิกัด", checks.differentSites],
+    ["coordinates", "พิกัดไม่ครบหรือไม่ถูกต้อง", checks.coordinates],
+    ["text", "ตัวอักษรผิดรูปแบบ", checks.text],
+  ] as const;
   const items = cameras.filter(
     (r) =>
       (!q ||
@@ -34,6 +44,7 @@ export default function CameraHealth({
       (!area || s(r, "area") === area) &&
       (!agency || s(r, "agency") === agency) &&
       (!type || s(r, "type") === type) &&
+      (!quality || qualityOptions.find(([key]) => key === quality)?.[2].has(r.id)) &&
       (!old ||
         (s(r, "status") === "offline" &&
           s(r, "last_seen") &&
@@ -45,6 +56,23 @@ export default function CameraHealth({
   };
   return (
     <>
+      <section className="panel" style={{ padding: 16, marginBottom: 16 }}>
+        <strong>{cameras.length} กล้อง · {checks.sites.length} จุดพิกัด</strong>
+        <p className="muted">นับจุดจากพิกัดที่ตรงกัน กล้องหลายตัวในจุดเดียวเก็บแยกครบทุกตัว</p>
+        <details>
+          <summary>ตรวจคุณภาพทะเบียน</summary>
+          <div className="toolbar" style={{ marginTop: 12 }}>
+            <label>รายการที่ต้องการตรวจ
+              <select value={quality} onChange={(e) => filter(setQuality, e.target.value)}>
+                <option value="">ทั้งหมด</option>
+                {qualityOptions.map(([key, label, ids]) => <option key={key} value={key}>{label} ({ids.size} รายการ)</option>)}
+              </select>
+            </label>
+            <p className="muted">ใช้ค้นหารายการเท่านั้น ไม่มีการลบหรือรวมข้อมูลอัตโนมัติ</p>
+          </div>
+        </details>
+        {quality && <button className="button" onClick={() => filter(setQuality, "")}>ล้างตัวกรองคุณภาพทะเบียน</button>}
+      </section>
       <div className="toolbar">
         <div className="input-icon">
           <Search size={16} />
