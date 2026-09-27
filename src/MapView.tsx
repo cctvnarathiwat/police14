@@ -1,3 +1,4 @@
+import { displayCode } from "./domain";
 import { useEffect, useState } from "react";
 import {
   MapContainer,
@@ -214,7 +215,7 @@ export default function MapView(p: Props) {
             }}
           >
             <Tooltip direction="top">
-              <b>{s(c, "code")}</b>
+              <b>{displayCode(c)}</b>
               <br />
               {s(c, "title")}
               {site.length > 1 && <><br />{site.length} กล้อง ณ พิกัดนี้ · คลิกดูทุก UID</>}
@@ -227,7 +228,7 @@ export default function MapView(p: Props) {
                   {site.map((camera, index) => (
                     <article key={camera.id}>
                       <strong>{index + 1}. {s(camera, "title")}</strong>
-                      <div>UID: {s(camera, "source_uid") && s(camera, "source_uid") !== "-" ? s(camera, "source_uid") : s(camera, "code")}</div>
+                      <div>UID: {s(camera, "source_uid") && s(camera, "source_uid") !== "-" ? s(camera, "source_uid") : (displayCode(camera) || "ไม่ระบุ")}</div>
                       <div>{s(camera, "type")} · {statusLabels[s(camera, "status")] ?? s(camera, "status")}</div>
                       {p.onSelect && <button className="button" onClick={() => p.onSelect?.(camera)}>รายละเอียดกล้องนี้</button>}
                     </article>
@@ -262,3 +263,4 @@ export default function MapView(p: Props) {
     </div>
   );
 }
+

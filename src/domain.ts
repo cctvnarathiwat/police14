@@ -452,3 +452,8 @@ export function download(blob: Blob, name: string) {
   a.click();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+export function displayCode(r: RecordRow): string {
+  const code = s(r, "code");
+  return r.kind === "camera" && /^CSV-(?:DUP-)?[a-f0-9]{16}(?:-\d+)?$/i.test(code) ? "" : code;
+}

@@ -1,3 +1,4 @@
+import { displayCode } from "./domain";
 import { CAMERA_TYPES } from "./domain";
 import { useState } from "react";
 import { Camera, Grid2X2, List, Map, Plus, Search } from "lucide-react";
@@ -155,7 +156,7 @@ export default function CameraHealth({
                   <Camera size={23} />
                   <Badge status={s(r, "status")} />
                 </div>
-                <span className="mono">{s(r, "code")}</span>
+                <span className="mono">{displayCode(r)}</span>
                 <h3>{s(r, "title")}</h3>
                 <p>
                   {s(r, "area")} · {s(r, "type")}
@@ -194,3 +195,4 @@ export default function CameraHealth({
     </>
   );
 }
+

@@ -1,3 +1,4 @@
+import { displayCode } from "./domain";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   X,
@@ -223,7 +224,7 @@ export function Editor({
                         .filter((r) => r.kind === f.ref)
                         .map((r) => (
                           <option key={r.id} value={r.id}>
-                            {s(r, "code")} · {s(r, "title")}
+                            {displayCode(r)} · {s(r, "title")}
                           </option>
                         ))
                     : f.options?.map((v) => (
@@ -336,7 +337,7 @@ export function RecordTable({
             <tr key={r.id}>
               <td>
                 <button className="record-link" onClick={() => onOpen(r)}>
-                  <span className="mono">{s(r, "code")}</span>
+                  <span className="mono">{displayCode(r)}</span>
                   <strong>{s(r, "title")}</strong>
                 </button>
               </td>
@@ -350,7 +351,7 @@ export function RecordTable({
               <td>
                 <button
                   className="icon-button"
-                  aria-label={`เปิด ${s(r, "code")}`}
+                  aria-label={`เปิด ${displayCode(r) || s(r, "title")}`}
                   onClick={() => onOpen(r)}
                 >
                   <ArrowUpRight size={17} />
@@ -481,7 +482,7 @@ export function Details({
     <Modal title={s(r, "title")} onClose={onClose}>
       <div className="detail-body">
         <div className="toolbar">
-          <span className="mono">{s(r, "code")}</span>
+          <span className="mono">{displayCode(r)}</span>
           <Badge status={s(r, "status")} />
         </div>
         <dl>
@@ -514,7 +515,7 @@ export function Details({
               <article key={camera.id}>
                 <strong>{index + 1}. {s(camera, "title")}</strong>
                 <div>UID: {s(camera, "source_uid") && s(camera, "source_uid") !== "-" ? s(camera, "source_uid") : "ไม่ระบุ"}</div>
-                <div>รหัสอ้างอิง: {s(camera, "code")}</div>
+                
                 <div>{s(camera, "type")} · <Badge status={s(camera, "status")} /></div>
                 <button className="button" disabled={camera.id === r.id} onClick={() => onOpen(camera)}>
                   {camera.id === r.id ? "กำลังแสดงกล้องนี้" : "รายละเอียดกล้องนี้"}
@@ -589,3 +590,5 @@ export function Details({
     </Modal>
   );
 }
+
+
