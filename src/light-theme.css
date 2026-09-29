@@ -1155,3 +1155,8 @@ dd {
 .badge.disposed { background: #e2e8f0; color: #475569; } .badge.inventory { background: #dbeafe; color: #1d4ed8; } .dot.gray { background: #94a3b8; } .dot.blue { background: #60a5fa; }
 
 .map-bottom { flex-wrap: wrap; row-gap: 8px; }
+
+.route-point-detail { padding: 16px; border-top: 1px solid #d7e3eb; background: #f3f8ff; }
+.route-point-detail h3 { margin: 0 0 8px; }
+.route-camera-results { display: grid; gap: 6px; max-height: 240px; overflow: auto; margin-top: 8px; }
+.route-camera-results .button { text-align: left; justify-content: flex-start; white-space: normal; }

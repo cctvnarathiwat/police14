@@ -61,7 +61,7 @@ const nav = [
   { id: "heat", label: "Heat Map", icon: Flame },
   { id: "area", label: "วิเคราะห์พื้นที่", icon: Crosshair },
   { id: "route", label: "วิเคราะห์เส้นทาง", icon: Route },
-  { id: "investigation", label: "แฟ้มสืบสวน / Timeline", icon: FolderSearch },
+  { id: "investigation", label: "Timeline / CCTV Route", icon: FolderSearch },
   { id: "evidence", label: "คลังหลักฐาน", icon: FileText },
   { id: "reports", label: "ศูนย์รายงาน", icon: FileText },
   { id: "users", label: "ผู้ใช้งานและสิทธิ์", icon: Users },

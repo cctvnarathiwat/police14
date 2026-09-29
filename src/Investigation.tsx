@@ -1,3 +1,4 @@
+import { orderedTimeline, evidenceForPoint } from "./investigationData";
 import { displayCode } from "./domain";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -56,11 +57,16 @@ export default function Investigation({
     [selected, setSelected] = useState(""),
     [playing, setPlaying] = useState(false),
     [speed, setSpeed] = useState(1),
+    [drawing, setDrawing] = useState(false),
+    [draftRoute, setDraftRoute] = useState<Point[]>([]),
+    [routeName, setRouteName] = useState(""),
+    [savedRouteId, setSavedRouteId] = useState(""),
+    [savingRoute, setSavingRoute] = useState(false),
+    [notice, setNotice] = useState(""),
+    [cameraQuery, setCameraQuery] = useState(""),
     [error, setError] = useState("");
   const current = cases.find((c) => c.id === caseId);
-  const timeline = rows
-    .filter((r) => r.kind === "timeline" && r.parent_id === caseId)
-    .sort((a, b) => s(a, "occurred_at").localeCompare(s(b, "occurred_at")));
+  const timeline = orderedTimeline(rows, caseId);
   const evidence = rows.filter(
       (r) => r.kind === "evidence" && r.parent_id === caseId,
     ),
@@ -70,6 +76,57 @@ export default function Investigation({
     );
   const chosen = timeline.find((r) => r.id === selected),
     write = canWrite(profile!.role, "timeline");
+  const routePoints = timeline.filter(hasPosition);
+  const savedRoutes = rows.filter(
+    (r) => r.kind === "route" && r.parent_id === caseId,
+  );
+  const savedRoute = savedRoutes.find((r) => r.id === savedRouteId);
+  const visibleDrawnRoute = draftRoute.length
+    ? draftRoute
+    : (savedRoute?.data.points as Point[] | undefined);
+  const chosenCamera = rows.find(
+    (r) => r.kind === "camera" && r.id === chosen?.data.camera_id,
+  );
+  const pointEvidence = (t: RecordRow) => evidenceForPoint(evidence, t);
+  useEffect(() => {
+    setSelected("");
+    setPlaying(false);
+    setCameraQuery("");
+    setDrawing(false);
+    setDraftRoute([]);
+    setSavedRouteId("");
+    setRouteName("");
+    setNotice("");
+    setError("");
+  }, [caseId]);
+  async function storeRoute() {
+    if (!current || !write || draftRoute.length < 2 || savingRoute) return;
+    setSavingRoute(true);
+    setError("");
+    try {
+      const result = await save(
+        "route",
+        {
+          title: routeName.trim() || "เส้นทางก่อเหตุที่วาด",
+          code: `RTE-${crypto.randomUUID().slice(0, 8)}`,
+          status: "draft",
+          points: draftRoute,
+          corridor: 100,
+          notes: "เส้นทางที่ผู้ใช้วาดเพื่อประกอบการสืบสวน",
+        },
+        undefined,
+        current.id,
+      );
+      setSavedRouteId(result.id);
+      setDraftRoute([]);
+      setDrawing(false);
+      setNotice("บันทึกเส้นทางในแฟ้มแล้ว");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSavingRoute(false);
+    }
+  }
   useEffect(() => {
     if (!playing || !timeline.length) return;
     const interval = setInterval(() => {
@@ -93,6 +150,10 @@ export default function Investigation({
   }
   return (
     <>
+      <h2>Timeline + CCTV Route Investigation</h2>
+      <p className="muted">
+        ลำดับเหตุการณ์ตามเวลา → กล้องแต่ละจุด → จุดสิ้นสุด พร้อมหลักฐานในแฟ้ม
+      </p>
       <div className="toolbar">
         <div className="segmented">
           <button
@@ -110,6 +171,7 @@ export default function Investigation({
         </div>
         <select
           aria-label="เลือกแฟ้มสืบสวน"
+          disabled={draftRoute.length > 0 || savingRoute}
           value={caseId}
           onChange={(e) => {
             setCaseId(e.target.value);
@@ -135,6 +197,7 @@ export default function Investigation({
         )}
       </div>
       {error && <p className="error">{error}</p>}
+      {notice && <p role="status">{notice}</p>}
       {board ? (
         <div className="kanban">
           {definitions.case.statuses.map((status) => (
@@ -169,6 +232,7 @@ export default function Investigation({
                   >
                     <button
                       className="record-link"
+                      disabled={draftRoute.length > 0 || savingRoute}
                       onClick={() => {
                         setCaseId(c.id);
                         setBoard(false);
@@ -239,12 +303,85 @@ export default function Investigation({
               <div className="panel-heading">
                 <h3>
                   <MapPin size={17} />
-                  Investigation Map
+                  CCTV Route Investigation
                 </h3>
                 <span className="muted">เส้นเชื่อมตามลำดับเวลาที่บันทึก</span>
               </div>
+              <div className="toolbar" style={{ padding: 12 }}>
+                {write && (
+                  <>
+                    <button
+                      className={`button ${drawing ? "primary" : ""}`}
+                      disabled={savingRoute}
+                      onClick={() => {
+                        setDrawing(!drawing);
+                        setPlaying(false);
+                      }}
+                    >
+                      {" "}
+                      {drawing ? "หยุดวาด" : "วาดเส้นทางก่อเหตุ"}
+                    </button>
+                    <button
+                      className="button"
+                      disabled={!draftRoute.length || savingRoute}
+                      onClick={() => setDraftRoute((p) => p.slice(0, -1))}
+                    >
+                      ย้อนจุดล่าสุด
+                    </button>
+                    <button
+                      className="button"
+                      disabled={!draftRoute.length || savingRoute}
+                      onClick={() => setDraftRoute([])}
+                    >
+                      ล้างเส้นร่าง
+                    </button>
+                    <input
+                      aria-label="ชื่อเส้นทางก่อเหตุ"
+                      placeholder="ชื่อเส้นทาง"
+                      value={routeName}
+                      onChange={(e) => setRouteName(e.target.value)}
+                    />
+                    <button
+                      className="button primary"
+                      disabled={draftRoute.length < 2 || savingRoute}
+                      onClick={() => void storeRoute()}
+                    >
+                      {savingRoute ? "กำลังบันทึก…" : "บันทึกเส้นทาง"}
+                    </button>
+                  </>
+                )}
+                <select
+                  aria-label="เส้นทางในแฟ้ม"
+                  value={savedRouteId}
+                  onChange={(e) => {
+                    setSavedRouteId(e.target.value);
+                    setDraftRoute([]);
+                    setDrawing(false);
+                  }}
+                  disabled={draftRoute.length > 0 || savingRoute}
+                >
+                  <option value="">ไม่แสดงเส้นทางที่บันทึก</option>
+                  {savedRoutes.map((r) => (
+                    <option key={r.id} value={r.id}>
+                      {s(r, "title")}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p className="muted" style={{ padding: "0 12px" }}>
+                สีฟ้า: เชื่อมจุดตามเวลา · สีส้ม: เส้นทางที่วาดประกอบการสืบสวน
+                {drawing
+                  ? ` · คลิกบนแผนที่เพื่อเพิ่มจุด (${draftRoute.length} จุด)`
+                  : ""}
+              </p>
               <MapView
                 cameras={cameras}
+                onClick={
+                  drawing && write && !savingRoute
+                    ? (point) => setDraftRoute((points) => [...points, point])
+                    : undefined
+                }
+                drawnRoute={visibleDrawnRoute}
                 onSelect={(c) =>
                   setSelected(
                     timeline.find((t) => t.data.camera_id === c.id)?.id ?? "",
@@ -256,12 +393,75 @@ export default function Investigation({
                 focus={
                   chosen && hasPosition(chosen) ? position(chosen) : undefined
                 }
-                route={timeline.filter(hasPosition).map(position)}
+                route={routePoints.map(position)}
+                routeLabels={routePoints.map(
+                  (t) =>
+                    `${timeline.indexOf(t) + 1}${t.id === timeline[timeline.length - 1]?.id ? " · จุดสิ้นสุด" : ""}`,
+                )}
+                onRouteSelect={(i) => {
+                  setSelected(routePoints[i].id);
+                  setPlaying(false);
+                }}
               />
+              {chosen && (
+                <section className="route-point-detail" aria-live="polite">
+                  <h3>
+                    จุด {timeline.indexOf(chosen) + 1}
+                    {chosen.id === timeline[timeline.length - 1]?.id
+                      ? " · จุดสิ้นสุด"
+                      : ""}{" "}
+                    — {s(chosen, "title")}
+                  </h3>
+                  <p>
+                    {dateTime(s(chosen, "occurred_at"))} ·{" "}
+                    {chosenCamera
+                      ? `${displayCode(chosenCamera) || "ไม่ระบุ UID"} · ${s(chosenCamera, "title")}`
+                      : "จุดที่ไม่ผูกกล้อง"}
+                  </p>
+                  <div className="toolbar">
+                    {chosenCamera && (
+                      <button
+                        className="button"
+                        onClick={() => onOpen(chosenCamera)}
+                      >
+                        รายละเอียดกล้อง
+                      </button>
+                    )}
+                    {write && (
+                      <button
+                        className="button"
+                        onClick={() =>
+                          onEdit("evidence", caseId, {
+                            camera_id: chosen.data.camera_id,
+                            timeline_id: chosen.id,
+                            occurred_at: chosen.data.occurred_at,
+                          })
+                        }
+                      >
+                        แนบหลักฐานจุดนี้
+                      </button>
+                    )}
+                    {pointEvidence(chosen).map((e) => (
+                      <button
+                        className="button"
+                        key={e.id}
+                        onClick={() => onEvidence(e)}
+                      >
+                        เปิดหลักฐาน: {s(e, "title")}
+                      </button>
+                    ))}
+                  </div>
+                  {!pointEvidence(chosen).length && (
+                    <p className="muted">
+                      ยังไม่มีหลักฐานของจุดหรือกล้องนี้ในแฟ้ม
+                    </p>
+                  )}
+                </section>
+              )}
               <div className="playback">
                 <button
                   className="button primary"
-                  disabled={!timeline.length}
+                  disabled={!timeline.length || drawing || savingRoute}
                   onClick={() => {
                     if (
                       !playing &&
@@ -304,6 +504,46 @@ export default function Investigation({
                   </button>
                 )}
               </div>
+              {write && (
+                <div style={{ padding: 12 }}>
+                  <input
+                    aria-label="ค้นหากล้องเพื่อเพิ่ม Timeline"
+                    placeholder="ค้นหาชื่อกล้องหรือ UID เพื่อเพิ่มจุด"
+                    value={cameraQuery}
+                    onChange={(e) => setCameraQuery(e.target.value)}
+                  />
+                  {cameraQuery.trim() && (
+                    <div className="route-camera-results">
+                      {rows
+                        .filter(
+                          (r) =>
+                            r.kind === "camera" &&
+                            `${displayCode(r)} ${s(r, "title")}`
+                              .toLowerCase()
+                              .includes(cameraQuery.trim().toLowerCase()),
+                        )
+                        .slice(0, 20)
+                        .map((c) => (
+                          <button
+                            className="button"
+                            key={c.id}
+                            onClick={() =>
+                              onEdit("timeline", caseId, {
+                                title: s(c, "title"),
+                                camera_id: c.id,
+                                lat: c.data.lat,
+                                lng: c.data.lng,
+                              })
+                            }
+                          >
+                            เพิ่มจุด: {displayCode(c) || "ไม่ระบุ UID"} ·{" "}
+                            {s(c, "title")}
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <div
                 className="timeline-list"
                 onDragOver={(e) => {
@@ -354,7 +594,10 @@ export default function Investigation({
                         >
                           <button
                             className="timeline-select"
-                            onClick={() => setSelected(t.id)}
+                            onClick={() => {
+                              setSelected(t.id);
+                              setPlaying(false);
+                            }}
                           >
                             <span
                               className={`timeline-bullet ${s(t, "status")}`}
@@ -362,7 +605,13 @@ export default function Investigation({
                               <CheckCircle2 size={13} />
                             </span>
                             <small>{dateTime(s(t, "occurred_at"))}</small>
-                            <h4>{s(t, "title")}</h4>
+                            <h4>
+                              จุด {i + 1}
+                              {i === timeline.length - 1
+                                ? " · จุดสิ้นสุด"
+                                : ""}{" "}
+                              — {s(t, "title")}
+                            </h4>
                             <p>{s(t, "observation")}</p>
                             <Badge status={s(t, "status")} />
                             {previous && (
@@ -376,6 +625,14 @@ export default function Investigation({
                             )}
                           </button>
                           <div className="timeline-actions">
+                            <button
+                              onClick={() => {
+                                setSelected(t.id);
+                                setPlaying(false);
+                              }}
+                            >
+                              หลักฐาน ({pointEvidence(t).length})
+                            </button>
                             <button onClick={() => onOpen(t)}>
                               รายละเอียด
                             </button>
@@ -523,6 +780,7 @@ export function EvidenceViewer({
           occurred_at: captureTime(),
           category: "ภาพ",
           camera_id: r.data.camera_id,
+          timeline_id: r.data.timeline_id,
           file_path: result.path,
           sha256: result.sha256,
           file_name: file.name,
@@ -646,4 +904,3 @@ export function EvidenceViewer({
     </Modal>
   );
 }
-

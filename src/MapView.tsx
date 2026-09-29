@@ -28,9 +28,13 @@ const color = (r: RecordRow) =>
     ? "#fb7185"
     : s(r, "status") === "maintenance"
       ? "#fbbf24"
-      : s(r, "status") === "disposed" ? "#94a3b8" : s(r, "status") === "inventory" ? "#60a5fa" : r.kind === "incident"
-        ? "#60a5fa"
-        : "#35d7ac";
+      : s(r, "status") === "disposed"
+        ? "#94a3b8"
+        : s(r, "status") === "inventory"
+          ? "#60a5fa"
+          : r.kind === "incident"
+            ? "#60a5fa"
+            : "#35d7ac";
 function Events({
   onClick,
   focus,
@@ -72,6 +76,9 @@ interface Props {
   radius?: number;
   multi?: boolean;
   route?: Point[];
+  routeLabels?: string[];
+  onRouteSelect?: (index: number) => void;
+  drawnRoute?: Point[];
   polygon?: Point[];
   fov?: boolean;
   focus?: Point;
@@ -156,18 +163,41 @@ export default function MapView(p: Props) {
             }}
           />
         )}
+        {p.drawnRoute && p.drawnRoute.length > 1 && (
+          <Polyline
+            positions={p.drawnRoute}
+            pathOptions={{ color: "#d97706", weight: 4, dashArray: "5 8" }}
+          />
+        )}
+        {p.drawnRoute?.map((v, i) => (
+          <CircleMarker
+            key={`draw-${i}`}
+            center={v}
+            radius={4}
+            interactive={false}
+            pathOptions={{ color: "#d97706", fillOpacity: 1 }}
+          />
+        ))}
         {p.route?.map((v, i) => (
           <CircleMarker
             key={i}
             center={v}
             radius={5}
+            eventHandlers={{
+              click: (e) => {
+                e.originalEvent.stopPropagation();
+                p.onRouteSelect?.(i);
+              },
+            }}
             pathOptions={{
               color: "#fff",
               fillColor: "#38bdf8",
               fillOpacity: 1,
             }}
           >
-            <Tooltip>{i + 1}</Tooltip>
+            <Tooltip permanent={!!p.routeLabels} direction="top">
+              {p.routeLabels?.[i] ?? i + 1}
+            </Tooltip>
           </CircleMarker>
         ))}
         {p.fov &&
@@ -197,46 +227,70 @@ export default function MapView(p: Props) {
           const c = site[0];
           const selected = site.some((r) => r.id === p.selected);
           return (
-          <CircleMarker
-            key={c.id}
-            center={position(c)}
-            radius={selected ? 12 : site.length > 1 ? 9 : 5}
-            pathOptions={{
-              color: selected ? "white" : color(c),
-              weight: 2,
-              fillColor: color(c),
-              fillOpacity: 0.9,
-            }}
-            eventHandlers={{
-              click: (e) => {
-                e.originalEvent.stopPropagation();
-                if (site.length === 1) p.onSelect?.(c);
-              },
-            }}
-          >
-            <Tooltip direction="top">
-              <b>{displayCode(c)}</b>
-              <br />
-              {s(c, "title")}
-              {site.length > 1 && <><br />{site.length} กล้อง ณ พิกัดนี้ · คลิกดูทุก UID</>}
-            </Tooltip>
-            {site.length > 1 && (
-              <Popup minWidth={260} maxWidth={360}>
-                <section className="site-camera-list">
-                  <h3>กล้อง ณ พิกัดนี้ ({site.length} ตัว)</h3>
-                  <p>{position(c).join(", ")} · ตามตัวกรองปัจจุบัน</p>
-                  {site.map((camera, index) => (
-                    <article key={camera.id}>
-                      <strong>{index + 1}. {s(camera, "title")}</strong>
-                      <div>UID: {s(camera, "source_uid") && s(camera, "source_uid") !== "-" ? s(camera, "source_uid") : (displayCode(camera) || "ไม่ระบุ")}</div>
-                      <div>{s(camera, "type")} · {statusLabels[s(camera, "status")] ?? s(camera, "status")}</div>
-                      {p.onSelect && <button className="button" onClick={() => p.onSelect?.(camera)}>รายละเอียดกล้องนี้</button>}
-                    </article>
-                  ))}
-                </section>
-              </Popup>
-            )}
-          </CircleMarker>
+            <CircleMarker
+              key={c.id}
+              center={position(c)}
+              radius={selected ? 12 : site.length > 1 ? 9 : 5}
+              pathOptions={{
+                color: selected ? "white" : color(c),
+                weight: 2,
+                fillColor: color(c),
+                fillOpacity: 0.9,
+              }}
+              eventHandlers={{
+                click: (e) => {
+                  e.originalEvent.stopPropagation();
+                  if (site.length === 1) p.onSelect?.(c);
+                },
+              }}
+            >
+              <Tooltip direction="top">
+                <b>{displayCode(c)}</b>
+                <br />
+                {s(c, "title")}
+                {site.length > 1 && (
+                  <>
+                    <br />
+                    {site.length} กล้อง ณ พิกัดนี้ · คลิกดูทุก UID
+                  </>
+                )}
+              </Tooltip>
+              {site.length > 1 && (
+                <Popup minWidth={260} maxWidth={360}>
+                  <section className="site-camera-list">
+                    <h3>กล้อง ณ พิกัดนี้ ({site.length} ตัว)</h3>
+                    <p>{position(c).join(", ")} · ตามตัวกรองปัจจุบัน</p>
+                    {site.map((camera, index) => (
+                      <article key={camera.id}>
+                        <strong>
+                          {index + 1}. {s(camera, "title")}
+                        </strong>
+                        <div>
+                          UID:{" "}
+                          {s(camera, "source_uid") &&
+                          s(camera, "source_uid") !== "-"
+                            ? s(camera, "source_uid")
+                            : displayCode(camera) || "ไม่ระบุ"}
+                        </div>
+                        <div>
+                          {s(camera, "type")} ·{" "}
+                          {statusLabels[s(camera, "status")] ??
+                            s(camera, "status")}
+                        </div>
+                        {p.onSelect && (
+                          <button
+                            className="button"
+                            onClick={() => p.onSelect?.(camera)}
+                          >
+                            รายละเอียดกล้องนี้
+                          </button>
+                        )}
+                      </article>
+                    ))}
+                  </section>
+                </Popup>
+              )}
+            </CircleMarker>
           );
         })}
         {p.incidents?.map((c) => (
@@ -263,5 +317,3 @@ export default function MapView(p: Props) {
     </div>
   );
 }
-
-

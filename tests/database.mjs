@@ -222,6 +222,13 @@ for (const status of ["disposed", "inventory"]) {
  assert.equal(result.rows[0].status, status);
 }
 console.log("PASS: camera disposed and inventory statuses save successfully");
+const routeId = "20000000-0000-4000-8000-000000000090";
+await as(admin, insert(routeId, "route", {title:"Drawn investigation route",code:"RTE-TEST",status:"draft",corridor:100,points:[[6.4,101.8],[6.41,101.81],[6.42,101.82]]}, caseId));
+const storedRoute = (await as(admin, "select parent_id,data from public.cc_records where id='"+routeId+"'")).rows[0];
+assert.equal(storedRoute.parent_id, caseId);
+assert.equal(storedRoute.data.points.length, 3);
+assert.equal((await as(outsider, "select id from public.cc_records where id='"+routeId+"'")).rows.length, 0);
+console.log("PASS: case-linked drawn route persists and respects organization isolation");
 await db.close();
 
 
