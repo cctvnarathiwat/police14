@@ -474,7 +474,11 @@ function Workspace() {
             </div>
           )}
           {page === "dashboard" && (
-            <Dashboard onOpen={open} onNavigate={navigate} />
+            <Dashboard
+              onOpen={open}
+              onNavigate={navigate}
+              onCreate={(kind) => edit(kind)}
+            />
           )}
           {["map", "area", "route", "heat"].includes(page) && (
             <Analysis
@@ -485,6 +489,9 @@ function Workspace() {
               onOpen={open}
               onTimeline={addTimeline}
               onSaveRoute={(data) => edit("route", undefined, data)}
+              onEdit={(r) =>
+                edit(r.kind, r.parent_id ?? undefined, undefined, r)
+              }
             />
           )}
           {page === "camera" && (
@@ -519,7 +526,14 @@ function Workspace() {
               onEvidence={(r) => setEvidence(r)}
             />
           )}
-          {page === "reports" && <Reports onOpen={open} />}
+          {page === "reports" && (
+            <Reports
+              onOpen={open}
+              onEdit={(r) =>
+                edit(r.kind, r.parent_id ?? undefined, undefined, r)
+              }
+            />
+          )}
           {page === "users" && <UsersPage />}
           {page === "audit" && (
             <section className="panel">

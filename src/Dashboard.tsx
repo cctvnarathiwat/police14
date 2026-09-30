@@ -10,25 +10,32 @@ import {
   Map,
   Clock,
   ShieldCheck,
+  Plus,
 } from "lucide-react";
 import { useStore, demo } from "./context";
-import { dateTime, hasPosition, s, type RecordRow } from "./domain";
+import { dateTime, hasPosition, s, type Kind, type RecordRow } from "./domain";
 import { Badge, Empty } from "./components";
 import MapView from "./MapView";
 import { inspectCameras } from "./cameraQuality";
 export default function Dashboard({
   onOpen,
   onNavigate,
+  onCreate,
 }: {
   onOpen: (r: RecordRow) => void;
   onNavigate: (page: string) => void;
+  onCreate: (kind: Kind) => void;
 }) {
-  const { rows } = useStore();
+  const { rows, profile } = useStore();
   const cameras = rows.filter((r) => r.kind === "camera"),
     incidents = rows.filter((r) => r.kind === "incident");
   const online = cameras.filter((r) => s(r, "status") === "online").length,
     offline = cameras.filter((r) => s(r, "status") === "offline").length,
-    maintenance = cameras.filter((r) => s(r, "status") === "maintenance").length, disposed = cameras.filter((r) => s(r, "status") === "disposed").length, inventory = cameras.filter((r) => s(r, "status") === "inventory").length;
+    maintenance = cameras.filter(
+      (r) => s(r, "status") === "maintenance",
+    ).length,
+    disposed = cameras.filter((r) => s(r, "status") === "disposed").length,
+    inventory = cameras.filter((r) => s(r, "status") === "inventory").length;
   const recent = [...rows]
     .filter((r) => ["incident", "job", "case", "sighting"].includes(r.kind))
     .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
@@ -83,6 +90,19 @@ export default function Dashboard({
           เปิดแผนที่ปฏิบัติการ
           <ArrowUpRight size={15} />
         </button>
+        {profile!.role !== "viewer" && (
+          <div className="hero-actions">
+            <button className="button" onClick={() => onCreate("camera")}>
+              <Camera size={16} /> เพิ่มกล้อง
+            </button>
+            <button
+              className="button primary"
+              onClick={() => onCreate("incident")}
+            >
+              <Plus size={16} /> เพิ่มเหตุการณ์
+            </button>
+          </div>
+        )}
       </div>
       <div className="stat-grid">
         {stats.map((v) => (
@@ -122,7 +142,9 @@ export default function Dashboard({
                 <th scope="col">ประเภทกล้อง</th>
                 <th scope="col">ออนไลน์</th>
                 <th scope="col">ออฟไลน์</th>
-                <th scope="col">ซ่อมบำรุง</th><th scope="col">จำหน่าย</th><th scope="col">คงคลัง</th>
+                <th scope="col">ซ่อมบำรุง</th>
+                <th scope="col">จำหน่าย</th>
+                <th scope="col">คงคลัง</th>
                 <th scope="col">รวม</th>
               </tr>
             </thead>
@@ -144,7 +166,13 @@ export default function Dashboard({
                         {type}
                       </span>
                     </th>
-                    {["online", "offline", "maintenance", "disposed", "inventory"].map((status) => (
+                    {[
+                      "online",
+                      "offline",
+                      "maintenance",
+                      "disposed",
+                      "inventory",
+                    ].map((status) => (
                       <td key={status}>
                         {group.filter((c) => s(c, "status") === status).length}
                       </td>
@@ -161,7 +189,9 @@ export default function Dashboard({
                 <th scope="row">รวมทั้งหมด</th>
                 <td>{online}</td>
                 <td>{offline}</td>
-                <td>{maintenance}</td><td>{disposed}</td><td>{inventory}</td>
+                <td>{maintenance}</td>
+                <td>{disposed}</td>
+                <td>{inventory}</td>
                 <td>{cameras.length}</td>
               </tr>
             </tfoot>
@@ -191,8 +221,12 @@ export default function Dashboard({
             <span>
               <i className="dot amber" /> ซ่อมบำรุง {maintenance}
             </span>
-            <span><i className="dot gray" /> จำหน่าย {disposed}</span>
-            <span><i className="dot blue" /> คงคลัง {inventory}</span>
+            <span>
+              <i className="dot gray" /> จำหน่าย {disposed}
+            </span>
+            <span>
+              <i className="dot blue" /> คงคลัง {inventory}
+            </span>
             <span className="push muted">
               {demo ? "ตำแหน่งจำลอง" : "ตำแหน่งจากทะเบียนกล้อง"}
             </span>
@@ -269,7 +303,9 @@ export default function Dashboard({
               {[
                 ["Online", online, "green"],
                 ["Offline", offline, "red"],
-                ["Maintenance", maintenance, "amber"], ["จำหน่าย", disposed, "gray"], ["คงคลัง", inventory, "blue"],
+                ["Maintenance", maintenance, "amber"],
+                ["จำหน่าย", disposed, "gray"],
+                ["คงคลัง", inventory, "blue"],
               ].map(([label, count, color]) => (
                 <div key={label}>
                   <span>
@@ -357,5 +393,3 @@ function RouteArt() {
     </svg>
   );
 }
-
-

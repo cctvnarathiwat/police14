@@ -35,6 +35,7 @@ interface Props {
   onOpen: (r: RecordRow) => void;
   onTimeline: (r: RecordRow, parent: string) => void;
   onSaveRoute: (data: Partial<Data>) => void;
+  onEdit: (r: RecordRow) => void;
 }
 export default function Analysis({
   mode,
@@ -43,6 +44,7 @@ export default function Analysis({
   onOpen,
   onTimeline,
   onSaveRoute,
+  onEdit,
 }: Props) {
   const { rows, profile } = useStore();
   const [center, setCenter] = useState<Point>(initial ?? CENTER),
@@ -393,7 +395,9 @@ export default function Analysis({
               <option value="">ทุกสถานะกล้อง</option>
               <option value="online">Online</option>
               <option value="offline">Offline</option>
-              <option value="maintenance">ซ่อมบำรุง</option><option value="disposed">จำหน่าย</option><option value="inventory">คงคลัง</option>
+              <option value="maintenance">ซ่อมบำรุง</option>
+              <option value="disposed">จำหน่าย</option>
+              <option value="inventory">คงคลัง</option>
             </select>
             <select
               aria-label="ประเภทกล้อง"
@@ -620,6 +624,9 @@ export default function Analysis({
                 </button>
                 {profile!.role !== "viewer" && (
                   <>
+                    <button className="button" onClick={() => onEdit(selected)}>
+                      แก้ไขกล้อง
+                    </button>
                     <select
                       aria-label="แฟ้มปลายทาง"
                       value={caseId}
@@ -656,5 +663,3 @@ export default function Analysis({
     </>
   );
 }
-
-

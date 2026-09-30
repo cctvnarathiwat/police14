@@ -19,10 +19,12 @@ import MapView from "./MapView";
 import { RecordTable } from "./components";
 export default function Reports({
   onOpen,
+  onEdit,
 }: {
   onOpen: (r: RecordRow) => void;
+  onEdit: (r: RecordRow) => void;
 }) {
-  const { rows, log, profile } = useStore();
+  const { rows, log, profile, archive } = useStore();
   const [kind, setKind] = useState<Kind>("camera"),
     [status, setStatus] = useState(""),
     [from, setFrom] = useState(""),
@@ -66,7 +68,18 @@ export default function Reports({
       if (profile!.role === "viewer")
         throw new Error("สิทธิ์ Viewer ไม่สามารถส่งออกรายงาน");
       await log(`EXPORT_${format.toUpperCase()}`, caseId || undefined);
-      const data = [columns, ...items.map((r) => columns.map((c) => c === "code" ? displayCode(r) : c === "status" ? (statusLabels[s(r, c)] ?? s(r, c)) : s(r, c)))];
+      const data = [
+        columns,
+        ...items.map((r) =>
+          columns.map((c) =>
+            c === "code"
+              ? displayCode(r)
+              : c === "status"
+                ? (statusLabels[s(r, c)] ?? s(r, c))
+                : s(r, c),
+          ),
+        ),
+      ];
       if (format === "print") {
         window.print();
       } else if (format === "csv") {
@@ -124,7 +137,11 @@ export default function Reports({
           สถานะ
           <select value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="">ทุกสถานะ</option>
-            {definitions[kind].statuses.map((value) => <option key={value} value={value}>{statusLabels[value] ?? value}</option>)}
+            {definitions[kind].statuses.map((value) => (
+              <option key={value} value={value}>
+                {statusLabels[value] ?? value}
+              </option>
+            ))}
           </select>
         </label>
         <label>
@@ -204,7 +221,12 @@ export default function Reports({
           </div>
         </div>
         {error && <p className="error">{error}</p>}
-        <RecordTable rows={items} onOpen={onOpen} />
+        <RecordTable
+          rows={items}
+          onOpen={onOpen}
+          onEdit={onEdit}
+          onArchive={archive}
+        />
         {caseId && ["case", "timeline"].includes(kind) && (
           <div className="case-report">
             <h3>
@@ -266,4 +288,3 @@ export default function Reports({
     </>
   );
 }
-

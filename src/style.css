@@ -396,6 +396,12 @@ main {
   color: #7e90aa;
   margin: 0;
 }
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
 .title-dot {
   display: inline-block;
   width: 7px;
