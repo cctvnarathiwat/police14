@@ -567,6 +567,9 @@ export function RecordList({
       {kind === "incident" && canWrite(profile!.role, kind) && (
         <IncidentImporter />
       )}
+      {kind === "vehicle" && canWrite(profile!.role, kind) && (
+        <VehicleImporter />
+      )}
       <div className="panel">
         <RecordTable
           rows={items.slice(page * 15, page * 15 + 15)}
@@ -729,6 +732,161 @@ function IncidentImporter() {
         <p className="muted">
           อ่านเฉพาะ สภ.เมืองนราธิวาส เก็บหมวดเหตุเดิม พิกัด รายละเอียด
           และวันเกิดเหตุ โดยไม่สร้างรายการซ้ำจากไฟล์เดิม
+        </p>
+      </div>
+      <input
+        ref={inputRef}
+        className="visually-hidden"
+        type="file"
+        accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) void importFile(file);
+        }}
+      />
+      <button
+        className="button"
+        disabled={busy}
+        onClick={() => inputRef.current?.click()}
+      >
+        <FileUp size={16} /> {busy ? "กำลังนำเข้า…" : "เลือกไฟล์ Excel"}
+      </button>
+      {message && <p className="success-message">{message}</p>}
+      {error && <p className="error">{error}</p>}
+    </section>
+  );
+}
+
+function VehicleImporter() {
+  const { rows, save } = useStore();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [message, setMessage] = useState(""),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false);
+
+  async function importFile(file: File) {
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const { readSheet } = await import("read-excel-file/browser");
+      const sheet = await readSheet(file);
+      const [, ...sourceRows] = sheet;
+      if (!sourceRows.length || sourceRows.some((row) => row.length < 21)) {
+        throw new Error("ไม่พบคอลัมน์มาตรฐานของไฟล์รถหายและรถได้คืน");
+      }
+      const text = (row: unknown[], index: number) =>
+        String(row[index] ?? "").trim();
+      const compact = (value: string, limit = 110) => {
+        const normalized = value.replace(/\s+/g, " ").trim();
+        return normalized.length > limit
+          ? `${normalized.slice(0, limit - 1).trimEnd()}…`
+          : normalized;
+      };
+      const sourceDate = (value: unknown) => {
+        if (value instanceof Date)
+          return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, "0")}-${String(value.getDate()).padStart(2, "0")}`;
+        return String(value ?? "")
+          .trim()
+          .slice(0, 10);
+      };
+      const targetRows = sourceRows
+        .map((row, index) => ({ row, sourceRow: index + 2 }))
+        .filter(({ row }) =>
+          text(row, 14).replace(/^สภ\./, "").includes("เมืองนราธิวาส"),
+        );
+      if (!targetRows.length) {
+        throw new Error("ไม่พบข้อมูลของ สภ.เมืองนราธิวาส ในไฟล์นี้");
+      }
+      const existing = new Map(
+        rows
+          .filter(
+            (record) =>
+              record.kind === "vehicle" &&
+              typeof record.data.source_ref === "string",
+          )
+          .map((record) => [String(record.data.source_ref), record]),
+      );
+      let imported = 0,
+        updated = 0,
+        invalid = 0;
+      for (let start = 0; start < targetRows.length; start += 8) {
+        const batch = targetRows.slice(start, start + 8);
+        const result = await Promise.all(
+          batch.map(async ({ row, sourceRow }) => {
+            const sourceRef = `nara-vehicle-xlsx:${sourceRow}`;
+            const current = existing.get(sourceRef);
+            const plate = text(row, 5);
+            const brand = [text(row, 6), text(row, 7), text(row, 8)]
+              .filter(Boolean)
+              .join(" ");
+            const reason = text(row, 16) || "แจ้งเตือนรถจากไฟล์ต้นฉบับ";
+            if (!plate) return "invalid";
+            const returnedAt = sourceDate(row[13]);
+            const lat = Number(text(row, 19));
+            const lng = Number(text(row, 20));
+            const location = text(row, 18);
+            await save(
+              "vehicle",
+              {
+                code: current
+                  ? String(current.data.code)
+                  : `VEH-NARA-XLSX-${sourceRow}`,
+                title: compact(
+                  `${plate} · ${brand || text(row, 6) || "รถแจ้งเตือน"}`,
+                ),
+                plate,
+                province: "นราธิวาส",
+                brand: compact(brand),
+                color: text(row, 9),
+                priority: returnedAt ? "normal" : "high",
+                reason,
+                notes: text(row, 25),
+                status: returnedAt ? "closed" : "active",
+                source_ref: sourceRef,
+                source_station: text(row, 14),
+                source_status: text(row, 2),
+                source_category: text(row, 16),
+                source_reported_at: sourceDate(row[12]),
+                source_returned_at: returnedAt,
+                vehicle_type: text(row, 6),
+                vehicle_model: text(row, 7),
+                vehicle_year: text(row, 8),
+                engine_no: text(row, 10),
+                chassis_no: text(row, 11),
+                source_location: location,
+                lat: Number.isFinite(lat) && Math.abs(lat) <= 90 ? lat : "",
+                lng: Number.isFinite(lng) && Math.abs(lng) <= 180 ? lng : "",
+              },
+              current,
+            );
+            return current ? "updated" : "imported";
+          }),
+        );
+        for (const item of result) {
+          if (item === "imported") imported++;
+          else if (item === "updated") updated++;
+          else invalid++;
+        }
+      }
+      setMessage(
+        `นำเข้า ${imported} รายการ · ปรับรายการเดิม ${updated} · ข้อมูลไม่ครบ ${invalid}`,
+      );
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      setBusy(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  return (
+    <section className="import-panel">
+      <div>
+        <strong>นำเข้าทะเบียนรถหายและรถได้คืน Excel</strong>
+        <p className="muted">
+          อ่านเฉพาะ สภ.เมืองนราธิวาส รถคืนแล้วจะปิดสถานะ ส่วนรถหายจะเป็น
+          รายการแจ้งเตือน และไม่สร้างรายการซ้ำจากไฟล์เดิม
         </p>
       </div>
       <input
