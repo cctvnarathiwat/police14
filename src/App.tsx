@@ -492,6 +492,7 @@ function Workspace() {
               onEdit={(r) =>
                 edit(r.kind, r.parent_id ?? undefined, undefined, r)
               }
+              onCreate={(kind, data) => edit(kind, undefined, data)}
             />
           )}
           {page === "camera" && (
@@ -532,6 +533,7 @@ function Workspace() {
               onEdit={(r) =>
                 edit(r.kind, r.parent_id ?? undefined, undefined, r)
               }
+              onCreate={(kind) => edit(kind)}
             />
           )}
           {page === "users" && <UsersPage />}

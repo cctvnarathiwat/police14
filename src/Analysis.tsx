@@ -36,6 +36,7 @@ interface Props {
   onTimeline: (r: RecordRow, parent: string) => void;
   onSaveRoute: (data: Partial<Data>) => void;
   onEdit: (r: RecordRow) => void;
+  onCreate: (kind: "camera" | "incident", data: Partial<Data>) => void;
 }
 export default function Analysis({
   mode,
@@ -45,8 +46,9 @@ export default function Analysis({
   onTimeline,
   onSaveRoute,
   onEdit,
+  onCreate,
 }: Props) {
-  const { rows, profile } = useStore();
+  const { rows, profile, archive } = useStore();
   const [center, setCenter] = useState<Point>(initial ?? CENTER),
     [radius, setRadius] = useState(500),
     [tool, setTool] = useState<"point" | "polygon" | "route">(
@@ -68,6 +70,8 @@ export default function Analysis({
     [onlyFov, setOnlyFov] = useState(false),
     [agency, setAgency] = useState(""),
     [cameraType, setCameraType] = useState("");
+  const [archiveConfirm, setArchiveConfirm] = useState(""),
+    [archiveError, setArchiveError] = useState("");
   const [dateFrom, setDateFrom] = useState(""),
     [dateTo, setDateTo] = useState(""),
     [hour, setHour] = useState(""),
@@ -245,6 +249,26 @@ export default function Analysis({
               บันทึกเส้นทาง
             </button>
           )}
+        {profile!.role !== "viewer" && (
+          <div className="analysis-create-actions">
+            <button
+              className="button"
+              onClick={() =>
+                onCreate("camera", { lat: center[0], lng: center[1] })
+              }
+            >
+              <Plus size={15} /> เพิ่มกล้อง
+            </button>
+            <button
+              className="button primary"
+              onClick={() =>
+                onCreate("incident", { lat: center[0], lng: center[1] })
+              }
+            >
+              <Plus size={15} /> เพิ่มเหตุการณ์
+            </button>
+          </div>
+        )}
       </div>
       <div className="analysis-grid">
         <div className="panel map-panel">
@@ -627,6 +651,30 @@ export default function Analysis({
                     <button className="button" onClick={() => onEdit(selected)}>
                       แก้ไขกล้อง
                     </button>
+                    <button
+                      className="button danger"
+                      onClick={async () => {
+                        if (archiveConfirm !== selected.id) {
+                          setArchiveConfirm(selected.id);
+                          setArchiveError("");
+                          return;
+                        }
+                        try {
+                          await archive(selected);
+                          setArchiveConfirm("");
+                          setSelected(null);
+                        } catch (error) {
+                          setArchiveError(
+                            error instanceof Error
+                              ? error.message
+                              : String(error),
+                          );
+                        }
+                      }}
+                    >
+                      <Trash2 size={15} />
+                      {archiveConfirm === selected.id ? "ยืนยันลบ" : "ลบกล้อง"}
+                    </button>
                     <select
                       aria-label="แฟ้มปลายทาง"
                       value={caseId}
@@ -651,6 +699,7 @@ export default function Analysis({
                     </button>
                   </>
                 )}
+                {archiveError && <p className="error">{archiveError}</p>}
               </div>
             )}
           </div>

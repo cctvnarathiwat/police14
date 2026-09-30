@@ -20,9 +20,11 @@ import { RecordTable } from "./components";
 export default function Reports({
   onOpen,
   onEdit,
+  onCreate,
 }: {
   onOpen: (r: RecordRow) => void;
   onEdit: (r: RecordRow) => void;
+  onCreate: (kind: Kind) => void;
 }) {
   const { rows, log, profile, archive } = useStore();
   const [kind, setKind] = useState<Kind>("camera"),
@@ -190,6 +192,11 @@ export default function Reports({
             </p>
           </div>
           <div className="toolbar no-print">
+            {profile!.role !== "viewer" && (
+              <button className="button primary" onClick={() => onCreate(kind)}>
+                เพิ่ม{definitions[kind].name}
+              </button>
+            )}
             {profile!.role !== "viewer" && (
               <>
                 <button

@@ -402,6 +402,11 @@ main {
   justify-content: flex-end;
   gap: 8px;
 }
+.analysis-create-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .title-dot {
   display: inline-block;
   width: 7px;
