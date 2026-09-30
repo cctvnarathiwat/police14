@@ -799,6 +799,28 @@ export default function Investigation({
               )}
             </section>
           )}
+          <section
+            className="investigation-recording-guide"
+            aria-label="ข้อมูลที่ควรบันทึกในระบบจริง"
+          >
+            <h3>ข้อมูลที่ควรบันทึกในระบบจริง</h3>
+            <p>
+              บันทึกทุกจุดให้มีเวลา พิกัด UID/ชื่อกล้อง และสิ่งที่ตรวจพบก่อน
+              แล้วจึงระบุทิศทาง บุคคลหรือยานพาหนะ ความชัดของภาพ
+              และระดับความมั่นใจ
+            </p>
+            <div>
+              <span>แฟ้มคดี</span>
+              <span>วันและเวลา</span>
+              <span>Latitude / Longitude</span>
+              <span>UID / ชื่อกล้อง</span>
+              <span>ภาพหรือวิดีโอ</span>
+              <span>ทิศทางกล้อง</span>
+              <span>บุคคล / ยานพาหนะ</span>
+              <span>ความมั่นใจ</span>
+              <span>ผู้บันทึกและประวัติแก้ไข</span>
+            </div>
+          </section>
           <section className="panel evidence-tray">
             <div className="panel-heading">
               <h3>
