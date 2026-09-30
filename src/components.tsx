@@ -564,6 +564,9 @@ export function RecordList({
           </button>
         )}
       </div>
+      {kind === "incident" && canWrite(profile!.role, kind) && (
+        <IncidentImporter />
+      )}
       <div className="panel">
         <RecordTable
           rows={items.slice(page * 15, page * 15 + 15)}
@@ -588,6 +591,155 @@ export function RecordList({
         </div>
       </div>
     </>
+  );
+}
+
+function IncidentImporter() {
+  const { rows, save } = useStore();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [message, setMessage] = useState(""),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false);
+
+  async function importFile(file: File) {
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const { readSheet } = await import("read-excel-file/browser");
+      const sheet = await readSheet(file);
+      const [headers, ...sourceRows] = sheet;
+      const columns = headers.map((value) => String(value ?? "").trim());
+      const column = (name: string) => columns.indexOf(name);
+      const required = [
+        "policestation",
+        "latitude",
+        "longitude",
+        "category",
+        "description",
+        "address",
+        "date_start",
+      ];
+      if (required.some((name) => column(name) < 0)) {
+        throw new Error("ไม่พบคอลัมน์มาตรฐานของไฟล์บันทึกเหตุการณ์");
+      }
+      const cell = (row: unknown[], name: string) =>
+        String(row[column(name)] ?? "").trim();
+      const targetRows = sourceRows
+        .map((row, index) => ({ row, sourceRow: index + 2 }))
+        .filter(({ row }) =>
+          cell(row, "policestation")
+            .replace(/^สภ\./, "")
+            .trim()
+            .includes("เมืองนราธิวาส"),
+        );
+      if (!targetRows.length) {
+        throw new Error("ไม่พบข้อมูลของ สภ.เมืองนราธิวาส ในไฟล์นี้");
+      }
+      const existing = new Set(
+        rows
+          .filter((record) => record.kind === "incident")
+          .map((record) => String(record.data.source_ref ?? "")),
+      );
+      let imported = 0,
+        skipped = 0,
+        invalid = 0;
+      for (const { row, sourceRow } of targetRows) {
+        const sourceRef = `nara-events-xlsx:${sourceRow}`;
+        if (existing.has(sourceRef)) {
+          skipped++;
+          continue;
+        }
+        const lat = Number(cell(row, "latitude"));
+        const lng = Number(cell(row, "longitude"));
+        const description = cell(row, "description");
+        const address = cell(row, "address");
+        const dateValue = row[column("date_start")];
+        const occurredAt =
+          dateValue instanceof Date
+            ? `${dateValue.getFullYear()}-${String(dateValue.getMonth() + 1).padStart(2, "0")}-${String(dateValue.getDate()).padStart(2, "0")}T00:00`
+            : cell(row, "date_start").replace(" ", "T").slice(0, 16);
+        if (
+          !Number.isFinite(lat) ||
+          !Number.isFinite(lng) ||
+          Math.abs(lat) > 90 ||
+          Math.abs(lng) > 180 ||
+          !address ||
+          !description ||
+          !Number.isFinite(Date.parse(occurredAt))
+        ) {
+          invalid++;
+          continue;
+        }
+        const sourceCategory = cell(row, "category");
+        const title = `${sourceCategory || "เหตุการณ์"} · ${address}`.slice(
+          0,
+          300,
+        );
+        await save("incident", {
+          code: `EVT-NARA-XLSX-${sourceRow}`,
+          title,
+          category: [
+            "อุบัติเหตุ",
+            "ลักทรัพย์",
+            "ทะเลาะวิวาท",
+            "รถแจ้งเตือน",
+          ].includes(sourceCategory)
+            ? sourceCategory
+            : "อื่น ๆ",
+          source_category: sourceCategory,
+          occurred_at: occurredAt,
+          area: address,
+          lat,
+          lng,
+          notes: description,
+          source_ref: sourceRef,
+          source_station: cell(row, "policestation"),
+          status: "open",
+        });
+        existing.add(sourceRef);
+        imported++;
+      }
+      setMessage(
+        `นำเข้า ${imported} รายการ · ข้ามรายการเดิม ${skipped} · ข้อมูลไม่ครบ ${invalid}`,
+      );
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      setBusy(false);
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  return (
+    <section className="import-panel">
+      <div>
+        <strong>นำเข้าบันทึกเหตุการณ์ Excel</strong>
+        <p className="muted">
+          อ่านเฉพาะ สภ.เมืองนราธิวาส เก็บหมวดเหตุเดิม พิกัด รายละเอียด
+          และวันเกิดเหตุ โดยไม่สร้างรายการซ้ำจากไฟล์เดิม
+        </p>
+      </div>
+      <input
+        ref={inputRef}
+        className="visually-hidden"
+        type="file"
+        accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) void importFile(file);
+        }}
+      />
+      <button
+        className="button"
+        disabled={busy}
+        onClick={() => inputRef.current?.click()}
+      >
+        <FileUp size={16} /> {busy ? "กำลังนำเข้า…" : "เลือกไฟล์ Excel"}
+      </button>
+      {message && <p className="success-message">{message}</p>}
+      {error && <p className="error">{error}</p>}
+    </section>
   );
 }
 export function Details({
