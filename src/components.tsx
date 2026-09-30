@@ -117,7 +117,8 @@ export function Editor({
   const [file, setFile] = useState<File | null>(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
-    [cameraSearch, setCameraSearch] = useState("");
+    [cameraSearch, setCameraSearch] = useState(""),
+    [cameraSearchInput, setCameraSearchInput] = useState("");
   const set = (key: string, value: string | number) =>
     setData((d) => ({ ...d, [key]: value }));
   const matchingCameras = rows
@@ -134,6 +135,7 @@ export function Editor({
     if (!cameraId) {
       setData((d) => ({ ...d, camera_id: "" }));
       setCameraSearch("");
+      setCameraSearchInput("");
       return;
     }
     const camera = rows.find((r) => r.id === cameraId);
@@ -144,9 +146,9 @@ export function Editor({
       lat: camera.data.lat,
       lng: camera.data.lng,
     }));
-    setCameraSearch(
-      `${displayCode(camera) || "ไม่ระบุ UID"} · ${s(camera, "title")}`,
-    );
+    const label = `${displayCode(camera) || "ไม่ระบุ UID"} · ${s(camera, "title")}`;
+    setCameraSearch(label);
+    setCameraSearchInput(label);
   }
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -235,12 +237,26 @@ export function Editor({
               {f.required ? " *" : ""}
               {f.ref === "camera" ? (
                 <>
-                  <input
-                    aria-label="ค้นหากล้องที่เกี่ยวข้อง"
-                    placeholder="ค้นหา UID หรือชื่อจุดติดตั้ง"
-                    value={cameraSearch}
-                    onChange={(e) => setCameraSearch(e.target.value)}
-                  />
+                  <div className="camera-search-control">
+                    <input
+                      aria-label="ค้นหากล้องที่เกี่ยวข้อง"
+                      placeholder="ค้นหา UID หรือชื่อจุดติดตั้ง"
+                      value={cameraSearchInput}
+                      onChange={(e) => setCameraSearchInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          setCameraSearch(cameraSearchInput);
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setCameraSearch(cameraSearchInput)}
+                    >
+                      <Search size={16} /> ค้นหากล้อง
+                    </button>
+                  </div>
                   {cameraSearch.trim() && (
                     <div
                       className="camera-picker-results"

@@ -1262,6 +1262,36 @@ dd {
 .camera-picker-results span {
   overflow-wrap: anywhere;
 }
+.camera-search-control {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+}
+.camera-search-control button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 9px;
+  background: #2672d4;
+  color: #fff;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.camera-search-control button:hover {
+  background: #1859ad;
+}
+@media (max-width: 520px) {
+  .camera-search-control {
+    grid-template-columns: 1fr;
+  }
+  .camera-search-control button {
+    min-height: 42px;
+    justify-content: center;
+  }
+}
 .investigation-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
