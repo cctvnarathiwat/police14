@@ -488,13 +488,20 @@ function Workspace() {
             />
           )}
           {page === "camera" && (
-            <CameraHealth onOpen={open} onNew={() => edit("camera")} />
+            <CameraHealth
+              onOpen={open}
+              onNew={() => edit("camera")}
+              onEdit={(r) => edit("camera", undefined, undefined, r)}
+            />
           )}
           {["incident", "job", "vehicle", "evidence"].includes(page) && (
             <RecordList
               key={page}
               kind={page as Kind}
               onOpen={open}
+              onEdit={(r) =>
+                edit(r.kind, r.parent_id ?? undefined, undefined, r)
+              }
               onNew={() =>
                 page === "evidence"
                   ? navigate("investigation")
@@ -686,4 +693,3 @@ export default function App() {
     </Provider>
   );
 }
-

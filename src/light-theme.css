@@ -1283,6 +1283,33 @@ dd {
 .camera-search-control button:hover {
   background: #1859ad;
 }
+.record-actions,
+.inline-record-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0;
+}
+.record-actions .icon-button,
+.inline-record-actions button {
+  min-height: 32px;
+  padding: 6px 9px;
+  border: 1px solid #cbd9e5;
+  border-radius: 7px;
+  background: #fff;
+  color: #24506f;
+  cursor: pointer;
+}
+.record-actions .danger-icon,
+.inline-record-actions .danger {
+  border-color: #f5b4b4;
+  background: #fff4f4;
+  color: #bb1f2c;
+}
+.evidence-entry {
+  display: grid;
+  gap: 7px;
+}
 @media (max-width: 520px) {
   .camera-search-control {
     grid-template-columns: 1fr;

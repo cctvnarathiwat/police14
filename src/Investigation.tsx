@@ -55,7 +55,7 @@ export default function Investigation({
   onEvidence: (r: RecordRow) => void;
   initialCase?: string;
 }) {
-  const { rows, save, profile } = useStore();
+  const { rows, save, profile, archive } = useStore();
   const cases = rows.filter((r) => r.kind === "case");
   const [caseId, setCaseId] = useState(initialCase || cases[0]?.id || ""),
     [board, setBoard] = useState(false),
@@ -72,6 +72,7 @@ export default function Investigation({
     [savingRoute, setSavingRoute] = useState(false),
     [notice, setNotice] = useState(""),
     [cameraQuery, setCameraQuery] = useState(""),
+    [archiveConfirm, setArchiveConfirm] = useState(""),
     [error, setError] = useState("");
   const current = cases.find((c) => c.id === caseId);
   const timeline = orderedTimeline(rows, caseId);
@@ -153,6 +154,20 @@ export default function Investigation({
   async function move(r: RecordRow, status: string) {
     try {
       await save("case", { ...r.data, status }, r);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+  async function archiveRecord(record: RecordRow) {
+    if (archiveConfirm !== record.id) {
+      setArchiveConfirm(record.id);
+      setNotice("กดลบอีกครั้งเพื่อยืนยัน รายการจะถูกเก็บในคลังและกู้คืนได้");
+      return;
+    }
+    try {
+      await archive(record);
+      setArchiveConfirm("");
+      setNotice("เก็บรายการไว้ในคลังแล้ว");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -273,6 +288,23 @@ export default function Investigation({
                           </option>
                         ))}
                       </select>
+                    )}
+                    {write && (
+                      <div className="inline-record-actions">
+                        <button
+                          onClick={() =>
+                            onEdit("case", undefined, undefined, c)
+                          }
+                        >
+                          แก้ไข
+                        </button>
+                        <button
+                          className="danger"
+                          onClick={() => void archiveRecord(c)}
+                        >
+                          {archiveConfirm === c.id ? "ยืนยันลบ" : "ลบ"}
+                        </button>
+                      </div>
                     )}
                   </article>
                 ))}
@@ -406,6 +438,25 @@ export default function Investigation({
                     </option>
                   ))}
                 </select>
+                {write && savedRoute && (
+                  <div className="inline-record-actions">
+                    <button
+                      onClick={() =>
+                        onEdit("route", caseId, undefined, savedRoute)
+                      }
+                    >
+                      แก้ไขเส้นทาง
+                    </button>
+                    <button
+                      className="danger"
+                      onClick={() => void archiveRecord(savedRoute)}
+                    >
+                      {archiveConfirm === savedRoute.id
+                        ? "ยืนยันลบ"
+                        : "ลบเส้นทาง"}
+                    </button>
+                  </div>
+                )}
               </div>
               <p className="muted" style={{ padding: "0 12px" }}>
                 สีฟ้า: เชื่อมจุดตามเวลา · สีส้ม: เส้นทางที่วาดประกอบการสืบสวน
@@ -683,6 +734,14 @@ export default function Investigation({
                                 แก้ไข
                               </button>
                             )}
+                            {write && (
+                              <button
+                                className="danger"
+                                onClick={() => void archiveRecord(t)}
+                              >
+                                {archiveConfirm === t.id ? "ยืนยันลบ" : "ลบ"}
+                              </button>
+                            )}
                             <button onClick={() => onAnalyze(position(t))}>
                               กล้องใกล้เคียง
                             </button>
@@ -840,22 +899,40 @@ export default function Investigation({
             <div className="evidence-cards">
               {evidence.length ? (
                 evidence.map((e) => (
-                  <button
-                    draggable={write}
-                    onDragStart={(ev) =>
-                      ev.dataTransfer.setData("text/plain", e.id)
-                    }
-                    key={e.id}
-                    className="evidence-card"
-                    onClick={() => onEvidence(e)}
-                  >
-                    <div>
-                      <Camera size={24} />
-                      <span>{s(e, "category")}</span>
-                    </div>
-                    <strong>{s(e, "title")}</strong>
-                    <small>{s(e, "file_name")}</small>
-                  </button>
+                  <article className="evidence-entry" key={e.id}>
+                    <button
+                      draggable={write}
+                      onDragStart={(ev) =>
+                        ev.dataTransfer.setData("text/plain", e.id)
+                      }
+                      className="evidence-card"
+                      onClick={() => onEvidence(e)}
+                    >
+                      <div>
+                        <Camera size={24} />
+                        <span>{s(e, "category")}</span>
+                      </div>
+                      <strong>{s(e, "title")}</strong>
+                      <small>{s(e, "file_name")}</small>
+                    </button>
+                    {write && (
+                      <div className="inline-record-actions">
+                        <button
+                          onClick={() =>
+                            onEdit("evidence", caseId, undefined, e)
+                          }
+                        >
+                          แก้ไข
+                        </button>
+                        <button
+                          className="danger"
+                          onClick={() => void archiveRecord(e)}
+                        >
+                          {archiveConfirm === e.id ? "ยืนยันลบ" : "ลบ"}
+                        </button>
+                      </div>
+                    )}
+                  </article>
                 ))
               ) : (
                 <p className="muted">

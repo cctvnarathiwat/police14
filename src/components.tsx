@@ -8,6 +8,8 @@ import {
   Search,
   ArrowUpRight,
   Archive,
+  Pencil,
+  Trash2,
   Check,
   Camera,
   MapPin,
@@ -396,54 +398,104 @@ export function Editor({
 export function RecordTable({
   rows,
   onOpen,
+  onEdit,
+  onArchive,
 }: {
   rows: RecordRow[];
   onOpen: (r: RecordRow) => void;
+  onEdit?: (r: RecordRow) => void;
+  onArchive?: (r: RecordRow) => Promise<void>;
 }) {
+  const { profile } = useStore();
+  const [confirmArchive, setConfirmArchive] = useState(""),
+    [archiveError, setArchiveError] = useState("");
   return rows.length ? (
-    <div className="table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>รหัส / รายการ</th>
-            <th>พื้นที่ / ผู้รับผิดชอบ</th>
-            <th>สถานะ</th>
-            <th>อัปเดตล่าสุด</th>
-            <th />
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((r) => (
-            <tr key={r.id}>
-              <td>
-                <button className="record-link" onClick={() => onOpen(r)}>
-                  {displayCode(r) && (
-                    <span className="mono">{displayCode(r)}</span>
-                  )}
-                  <strong>{s(r, "title")}</strong>
-                </button>
-              </td>
-              <td>
-                {s(r, "area") || s(r, "assignee") || s(r, "plate") || "—"}
-              </td>
-              <td>
-                <Badge status={s(r, "status")} />
-              </td>
-              <td className="muted">{dateTime(r.updated_at)}</td>
-              <td>
-                <button
-                  className="icon-button"
-                  aria-label={`เปิด ${displayCode(r) || s(r, "title")}`}
-                  onClick={() => onOpen(r)}
-                >
-                  <ArrowUpRight size={17} />
-                </button>
-              </td>
+    <>
+      {archiveError && (
+        <p className="error" role="alert">
+          {archiveError}
+        </p>
+      )}
+      <div className="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>รหัส / รายการ</th>
+              <th>พื้นที่ / ผู้รับผิดชอบ</th>
+              <th>สถานะ</th>
+              <th>อัปเดตล่าสุด</th>
+              <th />
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {rows.map((r) => (
+              <tr key={r.id}>
+                <td>
+                  <button className="record-link" onClick={() => onOpen(r)}>
+                    {displayCode(r) && (
+                      <span className="mono">{displayCode(r)}</span>
+                    )}
+                    <strong>{s(r, "title")}</strong>
+                  </button>
+                </td>
+                <td>
+                  {s(r, "area") || s(r, "assignee") || s(r, "plate") || "—"}
+                </td>
+                <td>
+                  <Badge status={s(r, "status")} />
+                </td>
+                <td className="muted">{dateTime(r.updated_at)}</td>
+                <td>
+                  <button
+                    className="icon-button"
+                    aria-label={`เปิด ${displayCode(r) || s(r, "title")}`}
+                    onClick={() => onOpen(r)}
+                  >
+                    <ArrowUpRight size={17} />
+                  </button>
+                  {onEdit && onArchive && canWrite(profile!.role, r.kind) && (
+                    <span className="record-actions">
+                      <button
+                        className="icon-button"
+                        aria-label={`แก้ไข ${displayCode(r) || s(r, "title")}`}
+                        onClick={() => onEdit(r)}
+                      >
+                        <Pencil size={16} />
+                      </button>
+                      <button
+                        className="icon-button danger-icon"
+                        aria-label={
+                          confirmArchive === r.id
+                            ? `ยืนยันลบ ${displayCode(r) || s(r, "title")}`
+                            : `ลบ ${displayCode(r) || s(r, "title")}`
+                        }
+                        onClick={async () => {
+                          if (confirmArchive !== r.id) {
+                            setConfirmArchive(r.id);
+                            return;
+                          }
+                          try {
+                            await onArchive(r);
+                            setConfirmArchive("");
+                            setArchiveError("");
+                          } catch (e) {
+                            setArchiveError(
+                              e instanceof Error ? e.message : String(e),
+                            );
+                          }
+                        }}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   ) : (
     <Empty />
   );
@@ -452,12 +504,14 @@ export function RecordList({
   kind,
   onOpen,
   onNew,
+  onEdit,
 }: {
   kind: Kind;
   onOpen: (r: RecordRow) => void;
   onNew: () => void;
+  onEdit: (r: RecordRow) => void;
 }) {
-  const { rows, profile } = useStore();
+  const { rows, profile, archive } = useStore();
   const [q, setQ] = useState(""),
     [status, setStatus] = useState(""),
     [page, setPage] = useState(0);
@@ -514,6 +568,8 @@ export function RecordList({
         <RecordTable
           rows={items.slice(page * 15, page * 15 + 15)}
           onOpen={onOpen}
+          onEdit={onEdit}
+          onArchive={archive}
         />
         <div className="pagination">
           <button disabled={page === 0} onClick={() => setPage((p) => p - 1)}>
@@ -668,7 +724,7 @@ export function Details({
               }}
             >
               <Archive size={15} />
-              {confirm ? "ยืนยันเก็บเข้าคลัง" : "เก็บเข้าคลัง"}
+              {confirm ? "ยืนยันลบ (กู้คืนได้)" : "ลบ (เก็บเข้าคลัง)"}
             </button>
             <button className="button" onClick={onEdit}>
               แก้ไขข้อมูล

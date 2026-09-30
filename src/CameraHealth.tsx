@@ -10,11 +10,13 @@ import { inspectCameras } from "./cameraQuality";
 export default function CameraHealth({
   onOpen,
   onNew,
+  onEdit,
 }: {
   onOpen: (r: RecordRow) => void;
   onNew: () => void;
+  onEdit: (r: RecordRow) => void;
 }) {
-  const { rows, profile } = useStore();
+  const { rows, profile, archive } = useStore();
   const [view, setView] = useState("table"),
     [q, setQ] = useState(""),
     [status, setStatus] = useState(""),
@@ -44,7 +46,8 @@ export default function CameraHealth({
       (!area || s(r, "area") === area) &&
       (!agency || s(r, "agency") === agency) &&
       (!type || s(r, "type") === type) &&
-      (!quality || qualityOptions.find(([key]) => key === quality)?.[2].has(r.id)) &&
+      (!quality ||
+        qualityOptions.find(([key]) => key === quality)?.[2].has(r.id)) &&
       (!old ||
         (s(r, "status") === "offline" &&
           s(r, "last_seen") &&
@@ -57,21 +60,39 @@ export default function CameraHealth({
   return (
     <>
       <section className="panel" style={{ padding: 16, marginBottom: 16 }}>
-        <strong>{cameras.length} กล้อง · {checks.sites.length} จุดพิกัด</strong>
-        <p className="muted">นับจุดจากพิกัดที่ตรงกัน กล้องหลายตัวในจุดเดียวเก็บแยกครบทุกตัว</p>
+        <strong>
+          {cameras.length} กล้อง · {checks.sites.length} จุดพิกัด
+        </strong>
+        <p className="muted">
+          นับจุดจากพิกัดที่ตรงกัน กล้องหลายตัวในจุดเดียวเก็บแยกครบทุกตัว
+        </p>
         <details>
           <summary>ตรวจคุณภาพทะเบียน</summary>
           <div className="toolbar" style={{ marginTop: 12 }}>
-            <label>รายการที่ต้องการตรวจ
-              <select value={quality} onChange={(e) => filter(setQuality, e.target.value)}>
+            <label>
+              รายการที่ต้องการตรวจ
+              <select
+                value={quality}
+                onChange={(e) => filter(setQuality, e.target.value)}
+              >
                 <option value="">ทั้งหมด</option>
-                {qualityOptions.map(([key, label, ids]) => <option key={key} value={key}>{label} ({ids.size} รายการ)</option>)}
+                {qualityOptions.map(([key, label, ids]) => (
+                  <option key={key} value={key}>
+                    {label} ({ids.size} รายการ)
+                  </option>
+                ))}
               </select>
             </label>
-            <p className="muted">ใช้ค้นหารายการเท่านั้น ไม่มีการลบหรือรวมข้อมูลอัตโนมัติ</p>
+            <p className="muted">
+              ใช้ค้นหารายการเท่านั้น ไม่มีการลบหรือรวมข้อมูลอัตโนมัติ
+            </p>
           </div>
         </details>
-        {quality && <button className="button" onClick={() => filter(setQuality, "")}>ล้างตัวกรองคุณภาพทะเบียน</button>}
+        {quality && (
+          <button className="button" onClick={() => filter(setQuality, "")}>
+            ล้างตัวกรองคุณภาพทะเบียน
+          </button>
+        )}
       </section>
       <div className="toolbar">
         <div className="input-icon">
@@ -91,7 +112,9 @@ export default function CameraHealth({
           <option value="">ทุกสถานะ</option>
           <option value="online">Online</option>
           <option value="offline">Offline</option>
-          <option value="maintenance">ซ่อมบำรุง</option><option value="disposed">จำหน่าย</option><option value="inventory">คงคลัง</option>
+          <option value="maintenance">ซ่อมบำรุง</option>
+          <option value="disposed">จำหน่าย</option>
+          <option value="inventory">คงคลัง</option>
         </select>
         <select
           aria-label="พื้นที่กล้อง"
@@ -201,6 +224,8 @@ export default function CameraHealth({
           <RecordTable
             rows={items.slice(page * 24, page * 24 + 24)}
             onOpen={onOpen}
+            onEdit={onEdit}
+            onArchive={archive}
           />
         </section>
       )}
@@ -223,5 +248,3 @@ export default function CameraHealth({
     </>
   );
 }
-
-
