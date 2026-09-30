@@ -264,6 +264,20 @@ export const definitions: Record<Kind, Definition> = {
         type: "textarea",
         required: true,
       },
+      { key: "movement", label: "ทิศทางการเคลื่อนที่" },
+      {
+        key: "image_quality",
+        label: "ความชัดของภาพ",
+        type: "select",
+        options: ["ภาพชัด", "เห็นบางส่วน", "ไม่ชัด"],
+      },
+      {
+        key: "confidence",
+        label: "ความมั่นใจ",
+        type: "select",
+        options: ["สูง", "ปานกลาง", "ต่ำ"],
+      },
+      { key: "detected", label: "บุคคล / ยานพาหนะที่ตรวจพบ" },
       note,
     ],
   },
@@ -306,7 +320,9 @@ export const definitions: Record<Kind, Definition> = {
 export const statusLabels: Record<string, string> = {
   online: "Online",
   offline: "Offline",
-  maintenance: "ซ่อมบำรุง", disposed: "จำหน่าย", inventory: "คงคลัง",
+  maintenance: "ซ่อมบำรุง",
+  disposed: "จำหน่าย",
+  inventory: "คงคลัง",
   open: "รับแจ้ง / เปิดใหม่",
   investigating: "กำลังตรวจสอบ",
   in_progress: "กำลังดำเนินการ",
@@ -334,8 +350,10 @@ export const hasPosition = (r: RecordRow) =>
 export const CENTER: Point = [6.4264, 101.8231];
 // Exact numeric coordinates only: do not merge nearby but distinct installations.
 export function cameraSiteKey(r: RecordRow): string {
-  return r.kind === "camera" && hasPosition(r) &&
-    s(r, "lat").trim() !== "" && s(r, "lng").trim() !== ""
+  return r.kind === "camera" &&
+    hasPosition(r) &&
+    s(r, "lat").trim() !== "" &&
+    s(r, "lng").trim() !== ""
     ? `${r.org_id}:${n(r, "lat")}:${n(r, "lng")}`
     : `record:${r.id}`;
 }
@@ -457,6 +475,8 @@ export function displayCode(r: RecordRow): string {
   const code = s(r, "code");
   const uid = s(r, "source_uid").trim();
   if (r.kind === "camera" && uid && uid !== "-") return uid;
-  return r.kind === "camera" && /^CSV-(?:DUP-)?[a-f0-9]{16}(?:-\d+)?$/i.test(code) ? "" : code;
+  return r.kind === "camera" &&
+    /^CSV-(?:DUP-)?[a-f0-9]{16}(?:-\d+)?$/i.test(code)
+    ? ""
+    : code;
 }
-

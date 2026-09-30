@@ -77,6 +77,7 @@ interface Props {
   multi?: boolean;
   route?: Point[];
   routeLabels?: string[];
+  showRouteLine?: boolean;
   onRouteSelect?: (index: number) => void;
   drawnRoute?: Point[];
   polygon?: Point[];
@@ -152,7 +153,7 @@ export default function MapView(p: Props) {
             pathOptions={{ color: "#38bdf8", weight: 1, fillOpacity: 0.1 }}
           />
         )}
-        {p.route && p.route.length > 1 && (
+        {p.showRouteLine !== false && p.route && p.route.length > 1 && (
           <Polyline
             positions={p.route}
             pathOptions={{

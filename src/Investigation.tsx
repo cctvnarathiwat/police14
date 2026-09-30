@@ -1,4 +1,9 @@
-import { orderedTimeline, evidenceForPoint } from "./investigationData";
+import {
+  orderedTimeline,
+  evidenceForPoint,
+  timelineSummary,
+  observationTime,
+} from "./investigationData";
 import { displayCode } from "./domain";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -58,6 +63,9 @@ export default function Investigation({
     [playing, setPlaying] = useState(false),
     [speed, setSpeed] = useState(1),
     [drawing, setDrawing] = useState(false),
+    [showCameras, setShowCameras] = useState(true),
+    [showConnections, setShowConnections] = useState(true),
+    [qualityFilter, setQualityFilter] = useState(""),
     [draftRoute, setDraftRoute] = useState<Point[]>([]),
     [routeName, setRouteName] = useState(""),
     [savedRouteId, setSavedRouteId] = useState(""),
@@ -74,9 +82,10 @@ export default function Investigation({
       (r) =>
         r.kind === "camera" && timeline.some((t) => t.data.camera_id === r.id),
     );
-  const chosen = timeline.find((r) => r.id === selected),
+  const chosen = timeline.find((r) => r.id === selected) || timeline[0],
     write = canWrite(profile!.role, "timeline");
   const routePoints = timeline.filter(hasPosition);
+  const summary = timelineSummary(timeline);
   const savedRoutes = rows.filter(
     (r) => r.kind === "route" && r.parent_id === caseId,
   );
@@ -298,6 +307,36 @@ export default function Investigation({
               ข้อมูลแฟ้ม
             </button>
           </div>
+          <section className="investigation-stats" aria-label="สรุปการติดตาม">
+            <article>
+              <span>จุด CCTV ใน Timeline</span>
+              <strong>
+                {timeline.filter((t) => !!t.data.camera_id).length} จุด
+              </strong>
+            </article>
+            <article>
+              <span>ช่วงเวลาติดตาม</span>
+              <strong>
+                {summary.durationMinutes === null
+                  ? "—"
+                  : summary.durationMinutes.toFixed(1) + " นาที"}
+              </strong>
+            </article>
+            <article>
+              <span>ระยะทางเส้นตรงรวมโดยประมาณ</span>
+              <strong>{(summary.distanceMeters / 1000).toFixed(2)} กม.</strong>
+            </article>
+            <article>
+              <span>สถานะเส้นทางตามเวลา</span>
+              <strong>
+                {timeline.length < 2
+                  ? "รอเพิ่มจุด"
+                  : routePoints.length === timeline.length
+                    ? "เชื่อมจุดแล้ว"
+                    : "พิกัดยังไม่ครบ"}
+              </strong>
+            </article>
+          </section>
           <div className="investigation-grid">
             <section className="panel">
               <div className="panel-heading">
@@ -374,8 +413,27 @@ export default function Investigation({
                   ? ` · คลิกบนแผนที่เพื่อเพิ่มจุด (${draftRoute.length} จุด)`
                   : ""}
               </p>
+              <div className="route-visibility">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={showCameras}
+                    onChange={(e) => setShowCameras(e.target.checked)}
+                  />{" "}
+                  แสดง CCTV
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={showConnections}
+                    onChange={(e) => setShowConnections(e.target.checked)}
+                  />{" "}
+                  แสดงเส้นเชื่อมจุด
+                </label>
+              </div>
               <MapView
-                cameras={cameras}
+                showRouteLine={showConnections}
+                cameras={showCameras ? cameras : []}
                 onClick={
                   drawing && write && !savingRoute
                     ? (point) => setDraftRoute((points) => [...points, point])
@@ -396,68 +454,13 @@ export default function Investigation({
                 route={routePoints.map(position)}
                 routeLabels={routePoints.map(
                   (t) =>
-                    `${timeline.indexOf(t) + 1}${t.id === timeline[timeline.length - 1]?.id ? " · จุดสิ้นสุด" : ""}`,
+                    `${timeline.indexOf(t) === 0 ? "เริ่ม · " : ""}${timeline.indexOf(t) + 1}${t.id === timeline[timeline.length - 1]?.id ? " · จุดสิ้นสุด" : ""}`,
                 )}
                 onRouteSelect={(i) => {
                   setSelected(routePoints[i].id);
                   setPlaying(false);
                 }}
               />
-              {chosen && (
-                <section className="route-point-detail" aria-live="polite">
-                  <h3>
-                    จุด {timeline.indexOf(chosen) + 1}
-                    {chosen.id === timeline[timeline.length - 1]?.id
-                      ? " · จุดสิ้นสุด"
-                      : ""}{" "}
-                    — {s(chosen, "title")}
-                  </h3>
-                  <p>
-                    {dateTime(s(chosen, "occurred_at"))} ·{" "}
-                    {chosenCamera
-                      ? `${displayCode(chosenCamera) || "ไม่ระบุ UID"} · ${s(chosenCamera, "title")}`
-                      : "จุดที่ไม่ผูกกล้อง"}
-                  </p>
-                  <div className="toolbar">
-                    {chosenCamera && (
-                      <button
-                        className="button"
-                        onClick={() => onOpen(chosenCamera)}
-                      >
-                        รายละเอียดกล้อง
-                      </button>
-                    )}
-                    {write && (
-                      <button
-                        className="button"
-                        onClick={() =>
-                          onEdit("evidence", caseId, {
-                            camera_id: chosen.data.camera_id,
-                            timeline_id: chosen.id,
-                            occurred_at: chosen.data.occurred_at,
-                          })
-                        }
-                      >
-                        แนบหลักฐานจุดนี้
-                      </button>
-                    )}
-                    {pointEvidence(chosen).map((e) => (
-                      <button
-                        className="button"
-                        key={e.id}
-                        onClick={() => onEvidence(e)}
-                      >
-                        เปิดหลักฐาน: {s(e, "title")}
-                      </button>
-                    ))}
-                  </div>
-                  {!pointEvidence(chosen).length && (
-                    <p className="muted">
-                      ยังไม่มีหลักฐานของจุดหรือกล้องนี้ในแฟ้ม
-                    </p>
-                  )}
-                </section>
-              )}
               <div className="playback">
                 <button
                   className="button primary"
@@ -494,6 +497,16 @@ export default function Investigation({
                   <Clock size={17} />
                   Timeline การสืบสวน
                 </h3>
+                <select
+                  aria-label="กรองความชัดของภาพ"
+                  value={qualityFilter}
+                  onChange={(e) => setQualityFilter(e.target.value)}
+                >
+                  <option value="">ทุกเหตุการณ์</option>
+                  {["ภาพชัด", "เห็นบางส่วน", "ไม่ชัด"].map((q) => (
+                    <option key={q}>{q}</option>
+                  ))}
+                </select>
                 {write && (
                   <button
                     className="icon-button"
@@ -544,6 +557,10 @@ export default function Investigation({
                   )}
                 </div>
               )}
+              {qualityFilter &&
+                !timeline.some(
+                  (t) => s(t, "image_quality") === qualityFilter,
+                ) && <Empty>ไม่มีเหตุการณ์ตรงกับตัวกรอง</Empty>}
               <div
                 className="timeline-list"
                 onDragOver={(e) => {
@@ -569,6 +586,14 @@ export default function Investigation({
               >
                 {timeline.length ? (
                   timeline.map((t, i) => {
+                    if (
+                      qualityFilter &&
+                      s(t, "image_quality") !== qualityFilter
+                    )
+                      return null;
+                    const camera = cameras.find(
+                      (c) => c.id === t.data.camera_id,
+                    );
                     const previous = timeline[i - 1],
                       gap = previous
                         ? (Date.parse(s(t, "occurred_at")) -
@@ -604,7 +629,9 @@ export default function Investigation({
                             >
                               <CheckCircle2 size={13} />
                             </span>
-                            <small>{dateTime(s(t, "occurred_at"))}</small>
+                            <small className="observation-time">
+                              {observationTime(s(t, "occurred_at"))}
+                            </small>
                             <h4>
                               จุด {i + 1}
                               {i === timeline.length - 1
@@ -612,7 +639,18 @@ export default function Investigation({
                                 : ""}{" "}
                               — {s(t, "title")}
                             </h4>
-                            <p>{s(t, "observation")}</p>
+                            <p>
+                              {camera
+                                ? (displayCode(camera) || "ไม่ระบุ UID") + " · "
+                                : ""}
+                              {s(t, "observation")}
+                            </p>
+                            {s(t, "movement") && <p>{s(t, "movement")}</p>}
+                            {s(t, "image_quality") && (
+                              <span className="quality-tag">
+                                {s(t, "image_quality")}
+                              </span>
+                            )}
                             <Badge status={s(t, "status")} />
                             {previous && (
                               <small>
@@ -663,6 +701,104 @@ export default function Investigation({
               </div>
             </section>
           </div>
+          {chosen && (
+            <section className="panel route-point-detail" aria-live="polite">
+              <h3>
+                จุด {timeline.indexOf(chosen) + 1}
+                {chosen.id === timeline[timeline.length - 1]?.id
+                  ? " · จุดสิ้นสุด"
+                  : ""}{" "}
+                — {s(chosen, "title")}
+              </h3>
+              <p>
+                {dateTime(s(chosen, "occurred_at"))} ·{" "}
+                {chosenCamera
+                  ? `${displayCode(chosenCamera) || "ไม่ระบุ UID"} · ${s(chosenCamera, "title")}`
+                  : "จุดที่ไม่ผูกกล้อง"}
+              </p>
+              <dl className="route-detail-grid">
+                <div>
+                  <dt>เวลา</dt>
+                  <dd>{observationTime(s(chosen, "occurred_at"))}</dd>
+                </div>
+                <div>
+                  <dt>สถานที่</dt>
+                  <dd>{s(chosen, "title")}</dd>
+                </div>
+                <div>
+                  <dt>UID กล้อง</dt>
+                  <dd>
+                    {chosenCamera
+                      ? displayCode(chosenCamera) || "ไม่ระบุ"
+                      : "ไม่ผูกกล้อง"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>ทิศทาง</dt>
+                  <dd>{s(chosen, "movement") || "ยังไม่ระบุ"}</dd>
+                </div>
+                <div>
+                  <dt>สิ่งที่ตรวจพบ</dt>
+                  <dd>{s(chosen, "observation") || "ยังไม่ระบุ"}</dd>
+                </div>
+                <div>
+                  <dt>บุคคล / ยานพาหนะ</dt>
+                  <dd>{s(chosen, "detected") || "ยังไม่ระบุ"}</dd>
+                </div>
+                <div>
+                  <dt>ความชัดของภาพ / ความมั่นใจ</dt>
+                  <dd>
+                    {s(chosen, "image_quality") || "ยังไม่ระบุ"} /{" "}
+                    {s(chosen, "confidence") || "ยังไม่ระบุ"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>ไฟล์หลักฐาน</dt>
+                  <dd>
+                    {pointEvidence(chosen)
+                      .map((e) => s(e, "file_name") || s(e, "title"))
+                      .join(" · ") || "ยังไม่มีไฟล์"}
+                  </dd>
+                </div>
+              </dl>
+              <div className="toolbar">
+                {chosenCamera && (
+                  <button
+                    className="button"
+                    onClick={() => onOpen(chosenCamera)}
+                  >
+                    รายละเอียดกล้อง
+                  </button>
+                )}
+                {write && (
+                  <button
+                    className="button"
+                    onClick={() =>
+                      onEdit("evidence", caseId, {
+                        camera_id: chosen.data.camera_id,
+                        timeline_id: chosen.id,
+                        occurred_at: chosen.data.occurred_at,
+                      })
+                    }
+                  >
+                    แนบหลักฐานจุดนี้
+                  </button>
+                )}
+                {pointEvidence(chosen).map((e) => (
+                  <button
+                    className="button"
+                    key={e.id}
+                    onClick={() => onEvidence(e)}
+                  >
+                    เปิดหลักฐาน: {s(e, "title")}
+                  </button>
+                ))}
+              </div>
+              {!pointEvidence(chosen).length && (
+                <p className="muted">ยังไม่มีหลักฐานของจุดหรือกล้องนี้ในแฟ้ม</p>
+              )}
+            </section>
+          )}
           <section className="panel evidence-tray">
             <div className="panel-heading">
               <h3>
