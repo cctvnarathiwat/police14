@@ -417,7 +417,7 @@ export function RecordTable({
         </p>
       )}
       <div className="table-scroll">
-        <table>
+        <table className="record-table">
           <thead>
             <tr>
               <th>รหัส / รายการ</th>
@@ -435,10 +435,10 @@ export function RecordTable({
                     {displayCode(r) && (
                       <span className="mono">{displayCode(r)}</span>
                     )}
-                    <strong>{s(r, "title")}</strong>
+                    <strong className="record-title">{s(r, "title")}</strong>
                   </button>
                 </td>
-                <td>
+                <td className="record-area">
                   {s(r, "area") || s(r, "assignee") || s(r, "plate") || "—"}
                 </td>
                 <td>
@@ -625,6 +625,12 @@ function IncidentImporter() {
       }
       const cell = (row: unknown[], name: string) =>
         String(row[column(name)] ?? "").trim();
+      const compact = (value: string, limit = 90) => {
+        const normalized = value.replace(/\s+/g, " ").trim();
+        return normalized.length > limit
+          ? `${normalized.slice(0, limit - 1).trimEnd()}…`
+          : normalized;
+      };
       const targetRows = sourceRows
         .map((row, index) => ({ row, sourceRow: index + 2 }))
         .filter(({ row }) =>
@@ -636,20 +642,21 @@ function IncidentImporter() {
       if (!targetRows.length) {
         throw new Error("ไม่พบข้อมูลของ สภ.เมืองนราธิวาส ในไฟล์นี้");
       }
-      const existing = new Set(
+      const existing = new Map(
         rows
-          .filter((record) => record.kind === "incident")
-          .map((record) => String(record.data.source_ref ?? "")),
+          .filter(
+            (record) =>
+              record.kind === "incident" &&
+              typeof record.data.source_ref === "string",
+          )
+          .map((record) => [String(record.data.source_ref), record]),
       );
       let imported = 0,
-        skipped = 0,
+        updated = 0,
         invalid = 0;
       for (const { row, sourceRow } of targetRows) {
         const sourceRef = `nara-events-xlsx:${sourceRow}`;
-        if (existing.has(sourceRef)) {
-          skipped++;
-          continue;
-        }
+        const current = existing.get(sourceRef);
         const lat = Number(cell(row, "latitude"));
         const lng = Number(cell(row, "longitude"));
         const description = cell(row, "description");
@@ -672,36 +679,40 @@ function IncidentImporter() {
           continue;
         }
         const sourceCategory = cell(row, "category");
-        const title = `${sourceCategory || "เหตุการณ์"} · ${address}`.slice(
-          0,
-          300,
+        const title = `${sourceCategory || "เหตุการณ์"} · ${compact(address)}`;
+        await save(
+          "incident",
+          {
+            code: current
+              ? String(current.data.code)
+              : `EVT-NARA-XLSX-${sourceRow}`,
+            title,
+            category: [
+              "อุบัติเหตุ",
+              "ลักทรัพย์",
+              "ทะเลาะวิวาท",
+              "รถแจ้งเตือน",
+            ].includes(sourceCategory)
+              ? sourceCategory
+              : "อื่น ๆ",
+            source_category: sourceCategory,
+            occurred_at: occurredAt,
+            area: compact(address),
+            lat,
+            lng,
+            notes: description,
+            source_ref: sourceRef,
+            source_station: cell(row, "policestation"),
+            source_address: address,
+            status: "open",
+          },
+          current,
         );
-        await save("incident", {
-          code: `EVT-NARA-XLSX-${sourceRow}`,
-          title,
-          category: [
-            "อุบัติเหตุ",
-            "ลักทรัพย์",
-            "ทะเลาะวิวาท",
-            "รถแจ้งเตือน",
-          ].includes(sourceCategory)
-            ? sourceCategory
-            : "อื่น ๆ",
-          source_category: sourceCategory,
-          occurred_at: occurredAt,
-          area: address,
-          lat,
-          lng,
-          notes: description,
-          source_ref: sourceRef,
-          source_station: cell(row, "policestation"),
-          status: "open",
-        });
-        existing.add(sourceRef);
-        imported++;
+        if (current) updated++;
+        else imported++;
       }
       setMessage(
-        `นำเข้า ${imported} รายการ · ข้ามรายการเดิม ${skipped} · ข้อมูลไม่ครบ ${invalid}`,
+        `นำเข้า ${imported} รายการ · ปรับรายการเดิม ${updated} · ข้อมูลไม่ครบ ${invalid}`,
       );
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : String(cause));

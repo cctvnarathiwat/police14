@@ -1047,6 +1047,48 @@ tbody tr:hover {
   margin-top: 6px;
   line-height: 1.6;
 }
+.record-table {
+  min-width: 760px;
+  table-layout: fixed;
+}
+.record-table th:nth-child(1) {
+  width: 34%;
+}
+.record-table th:nth-child(2) {
+  width: 31%;
+}
+.record-table th:nth-child(3) {
+  width: 14%;
+}
+.record-table th:nth-child(4) {
+  width: 15%;
+}
+.record-table th:nth-child(5) {
+  width: 110px;
+}
+.record-table td {
+  vertical-align: middle;
+}
+.record-link .mono,
+.record-title,
+.record-area {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.record-link .mono {
+  white-space: nowrap;
+}
+.record-title,
+.record-area {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-height: 1.45;
+}
+.record-area {
+  color: var(--muted);
+  white-space: normal;
+}
 .pagination {
   display: flex;
   justify-content: flex-end;
