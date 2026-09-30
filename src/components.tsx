@@ -116,9 +116,38 @@ export function Editor({
   );
   const [file, setFile] = useState<File | null>(null),
     [error, setError] = useState(""),
-    [busy, setBusy] = useState(false);
+    [busy, setBusy] = useState(false),
+    [cameraSearch, setCameraSearch] = useState("");
   const set = (key: string, value: string | number) =>
     setData((d) => ({ ...d, [key]: value }));
+  const matchingCameras = rows
+    .filter((r) => {
+      if (r.kind !== "camera" || r.archived) return false;
+      const query = cameraSearch.trim().toLowerCase();
+      return (
+        !query ||
+        `${displayCode(r)} ${s(r, "title")}`.toLowerCase().includes(query)
+      );
+    })
+    .slice(0, 20);
+  function chooseCamera(cameraId: string) {
+    if (!cameraId) {
+      setData((d) => ({ ...d, camera_id: "" }));
+      setCameraSearch("");
+      return;
+    }
+    const camera = rows.find((r) => r.id === cameraId);
+    if (!camera) return;
+    setData((d) => ({
+      ...d,
+      camera_id: camera.id,
+      lat: camera.data.lat,
+      lng: camera.data.lng,
+    }));
+    setCameraSearch(
+      `${displayCode(camera) || "ไม่ระบุ UID"} · ${s(camera, "title")}`,
+    );
+  }
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget as HTMLFormElement);
@@ -174,7 +203,11 @@ export function Editor({
     >
       <form onSubmit={submit}>
         <div className="form-grid">
-          <label style={record && !displayCode(record) ? { display: "none" } : undefined}>
+          <label
+            style={
+              record && !displayCode(record) ? { display: "none" } : undefined
+            }
+          >
             รหัสอ้างอิง
             <input
               required
@@ -200,38 +233,69 @@ export function Editor({
             <label key={f.key} className={f.type === "textarea" ? "wide" : ""}>
               {f.label}
               {f.required ? " *" : ""}
-              {f.type === "select" ? (
+              {f.ref === "camera" ? (
+                <>
+                  <input
+                    aria-label="ค้นหากล้องที่เกี่ยวข้อง"
+                    placeholder="ค้นหา UID หรือชื่อจุดติดตั้ง"
+                    value={cameraSearch}
+                    onChange={(e) => setCameraSearch(e.target.value)}
+                  />
+                  {cameraSearch.trim() && (
+                    <div
+                      className="camera-picker-results"
+                      role="listbox"
+                      aria-label="ผลการค้นหากล้อง"
+                    >
+                      {matchingCameras.length ? (
+                        matchingCameras.map((camera) => (
+                          <button
+                            type="button"
+                            role="option"
+                            aria-selected={data.camera_id === camera.id}
+                            key={camera.id}
+                            onClick={() => chooseCamera(camera.id)}
+                          >
+                            <strong>
+                              {displayCode(camera) || "ไม่ระบุ UID"}
+                            </strong>
+                            <span>{s(camera, "title")}</span>
+                          </button>
+                        ))
+                      ) : (
+                        <p className="muted">ไม่พบกล้องที่ตรงกับคำค้นหา</p>
+                      )}
+                    </div>
+                  )}
+                  <select
+                    required={f.required}
+                    value={String(data[f.key] ?? "")}
+                    onChange={(e) => chooseCamera(e.target.value)}
+                  >
+                    <option value="">เลือกจากรายการทั้งหมด…</option>
+                    {rows
+                      .filter((r) => r.kind === "camera" && !r.archived)
+                      .map((camera) => (
+                        <option key={camera.id} value={camera.id}>
+                          {displayCode(camera)} · {s(camera, "title")}
+                        </option>
+                      ))}
+                  </select>
+                </>
+              ) : f.type === "select" ? (
                 <select
                   required={f.required}
                   value={String(data[f.key] ?? "")}
                   onChange={(e) => {
                     set(f.key, e.target.value);
-                    if (f.ref === "camera") {
-                      const c = rows.find((r) => r.id === e.target.value);
-                      if (c)
-                        setData((d) => ({
-                          ...d,
-                          [f.key]: c.id,
-                          lat: c.data.lat,
-                          lng: c.data.lng,
-                        }));
-                    }
                   }}
                 >
                   <option value="">เลือก…</option>
-                  {f.ref
-                    ? rows
-                        .filter((r) => r.kind === f.ref)
-                        .map((r) => (
-                          <option key={r.id} value={r.id}>
-                            {displayCode(r)} · {s(r, "title")}
-                          </option>
-                        ))
-                    : f.options?.map((v) => (
-                        <option key={v} value={v}>
-                          {statusLabels[v] ?? v}
-                        </option>
-                      ))}
+                  {f.options?.map((v) => (
+                    <option key={v} value={v}>
+                      {statusLabels[v] ?? v}
+                    </option>
+                  ))}
                 </select>
               ) : f.type === "textarea" ? (
                 <textarea
@@ -337,7 +401,9 @@ export function RecordTable({
             <tr key={r.id}>
               <td>
                 <button className="record-link" onClick={() => onOpen(r)}>
-                  {displayCode(r) && <span className="mono">{displayCode(r)}</span>}
+                  {displayCode(r) && (
+                    <span className="mono">{displayCode(r)}</span>
+                  )}
                   <strong>{s(r, "title")}</strong>
                 </button>
               </td>
@@ -468,8 +534,15 @@ export function Details({
   onAdd: (kind: Kind, parent: string) => void;
 }) {
   const { rows, archive, profile } = useStore();
-  const siteCameras = r.kind === "camera" ? rows.filter((c) =>
-    c.kind === "camera" && !c.archived && cameraSiteKey(c) === cameraSiteKey(r)) : [];
+  const siteCameras =
+    r.kind === "camera"
+      ? rows.filter(
+          (c) =>
+            c.kind === "camera" &&
+            !c.archived &&
+            cameraSiteKey(c) === cameraSiteKey(r),
+        )
+      : [];
   const [error, setError] = useState(""),
     [confirm, setConfirm] = useState(false);
   const children = rows.filter(
@@ -513,12 +586,22 @@ export function Details({
             <h3>กล้องทั้งหมด ณ พิกัดเดียวกัน ({siteCameras.length} ตัว)</h3>
             {siteCameras.map((camera, index) => (
               <article key={camera.id}>
-                <strong>{index + 1}. {s(camera, "title")}</strong>
+                <strong>
+                  {index + 1}. {s(camera, "title")}
+                </strong>
                 <div>UID: {displayCode(camera) || "ไม่ระบุ"}</div>
-                
-                <div>{s(camera, "type")} · <Badge status={s(camera, "status")} /></div>
-                <button className="button" disabled={camera.id === r.id} onClick={() => onOpen(camera)}>
-                  {camera.id === r.id ? "กำลังแสดงกล้องนี้" : "รายละเอียดกล้องนี้"}
+
+                <div>
+                  {s(camera, "type")} · <Badge status={s(camera, "status")} />
+                </div>
+                <button
+                  className="button"
+                  disabled={camera.id === r.id}
+                  onClick={() => onOpen(camera)}
+                >
+                  {camera.id === r.id
+                    ? "กำลังแสดงกล้องนี้"
+                    : "รายละเอียดกล้องนี้"}
                 </button>
               </article>
             ))}
@@ -590,7 +673,3 @@ export function Details({
     </Modal>
   );
 }
-
-
-
-

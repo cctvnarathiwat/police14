@@ -1231,6 +1231,37 @@ dd {
   border: 1px solid #cbdff4;
   font-size: 12px;
 }
+.camera-picker-results {
+  display: grid;
+  gap: 6px;
+  max-height: 220px;
+  overflow: auto;
+  padding: 7px;
+  border: 1px solid #cbd9e5;
+  border-radius: 10px;
+  background: #f8fbff;
+}
+.camera-picker-results button {
+  display: grid;
+  grid-template-columns: minmax(110px, auto) 1fr;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: #fff;
+  color: #24435d;
+  text-align: left;
+  cursor: pointer;
+}
+.camera-picker-results button:hover,
+.camera-picker-results button[aria-selected="true"] {
+  border-color: #2672d4;
+  background: #e9f3ff;
+}
+.camera-picker-results span {
+  overflow-wrap: anywhere;
+}
 .investigation-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
