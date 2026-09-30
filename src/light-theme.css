@@ -1162,6 +1162,12 @@ dd {
 .site-camera-list .button {
   justify-self: start;
 }
+.map-record-popup {
+  color: #263a4a;
+}
+.map-record-popup p {
+  color: #526b7d;
+}
 
 .badge.disposed {
   background: #e2e8f0;

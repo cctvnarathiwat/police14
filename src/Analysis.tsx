@@ -65,6 +65,8 @@ export default function Analysis({
     [days, setDays] = useState(7),
     [showCameras, setShowCameras] = useState(true),
     [showIncidents, setShowIncidents] = useState(mode === "map"),
+    [showVehicles, setShowVehicles] = useState(mode === "map"),
+    [showSightings, setShowSightings] = useState(mode === "map"),
     [coordinate, setCoordinate] = useState(""),
     [coordError, setCoordError] = useState(""),
     [onlyFov, setOnlyFov] = useState(false),
@@ -77,6 +79,8 @@ export default function Analysis({
     [hour, setHour] = useState(""),
     [category, setCategory] = useState("");
   const cameras = rows.filter((r) => r.kind === "camera" && hasPosition(r));
+  const vehicles = rows.filter((r) => r.kind === "vehicle" && hasPosition(r));
+  const sightings = rows.filter((r) => r.kind === "sighting" && hasPosition(r));
   const result = useMemo(
     () =>
       cameras
@@ -296,6 +300,8 @@ export default function Analysis({
                 ? rows.filter((r) => r.kind === "incident" && hasPosition(r))
                 : []
             }
+            vehicles={showVehicles ? vehicles : []}
+            sightings={showSightings ? sightings : []}
             onSelect={pick}
             onClick={(p) => {
               if (tool === "point") setCenter(p);
@@ -383,6 +389,22 @@ export default function Analysis({
                   onChange={(e) => setShowIncidents(e.target.checked)}
                 />
                 เหตุการณ์
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={showVehicles}
+                  onChange={(e) => setShowVehicles(e.target.checked)}
+                />
+                รถแจ้งเตือน ({vehicles.length})
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={showSightings}
+                  onChange={(e) => setShowSightings(e.target.checked)}
+                />
+                จุดพบรถ ({sightings.length})
               </label>
               <label>
                 <input

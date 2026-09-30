@@ -28,7 +28,9 @@ export default function Dashboard({
 }) {
   const { rows, profile } = useStore();
   const cameras = rows.filter((r) => r.kind === "camera"),
-    incidents = rows.filter((r) => r.kind === "incident");
+    incidents = rows.filter((r) => r.kind === "incident"),
+    vehicles = rows.filter((r) => r.kind === "vehicle" && hasPosition(r)),
+    sightings = rows.filter((r) => r.kind === "sighting" && hasPosition(r));
   const online = cameras.filter((r) => s(r, "status") === "online").length,
     offline = cameras.filter((r) => s(r, "status") === "offline").length,
     maintenance = cameras.filter(
@@ -210,7 +212,12 @@ export default function Dashboard({
               <ArrowUpRight size={14} />
             </button>
           </div>
-          <MapView cameras={cameras.filter(hasPosition)} onSelect={onOpen} />
+          <MapView
+            cameras={cameras.filter(hasPosition)}
+            vehicles={vehicles}
+            sightings={sightings}
+            onSelect={onOpen}
+          />
           <div className="map-bottom">
             <span>
               <i className="dot" /> Online {online}

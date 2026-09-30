@@ -669,6 +669,44 @@ main {
 .leaflet-tooltip-top:before {
   border-top-color: #3b516c;
 }
+.map-record-popup {
+  display: grid;
+  gap: 7px;
+  min-width: 205px;
+  color: #dcecff;
+}
+.map-record-popup h3,
+.map-record-popup p {
+  margin: 0;
+}
+.map-record-popup h3 {
+  font-size: 13px;
+}
+.map-record-popup p {
+  color: #9eb5ce;
+  font-size: 10px;
+  line-height: 1.55;
+}
+.map-record-popup .button {
+  justify-self: start;
+  margin-top: 3px;
+}
+.map-kind {
+  width: fit-content;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #34465c;
+  color: #dbeafe;
+  font-size: 9px;
+}
+.map-kind.alert {
+  background: #7c2d12;
+  color: #fed7aa;
+}
+.map-kind.sighting {
+  background: #581c87;
+  color: #f3e8ff;
+}
 .map-home {
   position: absolute;
   bottom: 24px;

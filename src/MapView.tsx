@@ -70,6 +70,8 @@ function Home() {
 interface Props {
   cameras: RecordRow[];
   incidents?: RecordRow[];
+  vehicles?: RecordRow[];
+  sightings?: RecordRow[];
   onSelect?: (r: RecordRow) => void;
   onClick?: (p: Point) => void;
   center?: Point;
@@ -303,6 +305,85 @@ export default function MapView(p: Props) {
             eventHandlers={{ click: () => p.onSelect?.(c) }}
           >
             <Tooltip>{s(c, "title")}</Tooltip>
+          </CircleMarker>
+        ))}
+        {p.vehicles?.map((vehicle) => {
+          const active = s(vehicle, "status") === "active";
+          const markerColor = active ? "#f97316" : "#94a3b8";
+          return (
+            <CircleMarker
+              key={vehicle.id}
+              center={position(vehicle)}
+              radius={8}
+              pathOptions={{
+                color: "#fff",
+                weight: 2,
+                fillColor: markerColor,
+                fillOpacity: 0.95,
+              }}
+            >
+              <Tooltip direction="top">
+                <b>{s(vehicle, "plate") || displayCode(vehicle)}</b>
+                <br />
+                รถแจ้งเตือน · {statusLabels[s(vehicle, "status")]}
+              </Tooltip>
+              <Popup minWidth={235} maxWidth={330}>
+                <section className="map-record-popup">
+                  <span className={active ? "map-kind alert" : "map-kind"}>
+                    รถแจ้งเตือน · {statusLabels[s(vehicle, "status")]}
+                  </span>
+                  <h3>{s(vehicle, "plate") || displayCode(vehicle)}</h3>
+                  <p>{s(vehicle, "brand") || s(vehicle, "title")}</p>
+                  {s(vehicle, "color") && <p>สี: {s(vehicle, "color")}</p>}
+                  {s(vehicle, "source_location") && (
+                    <p>จุดอ้างอิง: {s(vehicle, "source_location")}</p>
+                  )}
+                  {p.onSelect && (
+                    <button
+                      className="button"
+                      onClick={() => p.onSelect?.(vehicle)}
+                    >
+                      เปิดรายละเอียดรถ
+                    </button>
+                  )}
+                </section>
+              </Popup>
+            </CircleMarker>
+          );
+        })}
+        {p.sightings?.map((sighting) => (
+          <CircleMarker
+            key={sighting.id}
+            center={position(sighting)}
+            radius={7}
+            pathOptions={{
+              color: "#fff",
+              weight: 2,
+              fillColor: "#a855f7",
+              fillOpacity: 0.95,
+            }}
+          >
+            <Tooltip direction="top">
+              <b>พบรถ</b>
+              <br />
+              {s(sighting, "title")}
+            </Tooltip>
+            <Popup minWidth={235} maxWidth={330}>
+              <section className="map-record-popup">
+                <span className="map-kind sighting">จุดพบรถ</span>
+                <h3>{s(sighting, "title")}</h3>
+                <p>{s(sighting, "occurred_at")}</p>
+                {s(sighting, "notes") && <p>{s(sighting, "notes")}</p>}
+                {p.onSelect && (
+                  <button
+                    className="button"
+                    onClick={() => p.onSelect?.(sighting)}
+                  >
+                    เปิดรายละเอียดการพบรถ
+                  </button>
+                )}
+              </section>
+            </Popup>
           </CircleMarker>
         ))}
       </MapContainer>
