@@ -325,12 +325,12 @@ export default function MapView(p: Props) {
               <Tooltip direction="top">
                 <b>{s(vehicle, "plate") || displayCode(vehicle)}</b>
                 <br />
-                รถแจ้งเตือน · {statusLabels[s(vehicle, "status")]}
+                สถานะรถ · {statusLabels[s(vehicle, "status")]}
               </Tooltip>
               <Popup minWidth={235} maxWidth={330}>
                 <section className="map-record-popup">
                   <span className={active ? "map-kind alert" : "map-kind"}>
-                    รถแจ้งเตือน · {statusLabels[s(vehicle, "status")]}
+                    สถานะรถ · {statusLabels[s(vehicle, "status")]}
                   </span>
                   <h3>{s(vehicle, "plate") || displayCode(vehicle)}</h3>
                   <p>{s(vehicle, "brand") || s(vehicle, "title")}</p>

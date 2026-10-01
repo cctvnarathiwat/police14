@@ -823,6 +823,7 @@ function VehicleImporter() {
             const reason = text(row, 16) || "แจ้งเตือนรถจากไฟล์ต้นฉบับ";
             if (!plate) return "invalid";
             const returnedAt = sourceDate(row[13]);
+            const returnedNote = returnedAt || "ไม่ระบุวันที่คืนในไฟล์ต้นฉบับ";
             const lat = Number(text(row, 19));
             const lng = Number(text(row, 20));
             const location = text(row, 18);
@@ -839,10 +840,12 @@ function VehicleImporter() {
                 province: "นราธิวาส",
                 brand: compact(brand),
                 color: text(row, 9),
-                priority: returnedAt ? "normal" : "high",
+                priority: "normal",
                 reason,
-                notes: text(row, 25),
-                status: returnedAt ? "closed" : "active",
+                notes: [text(row, 25), `สถานะจากไฟล์: รถหายแล้วได้คืน (${returnedNote})`]
+                  .filter(Boolean)
+                  .join(" · "),
+                status: "closed",
                 source_ref: sourceRef,
                 source_station: text(row, 14),
                 source_status: text(row, 2),
@@ -885,8 +888,8 @@ function VehicleImporter() {
       <div>
         <strong>นำเข้าทะเบียนรถหายและรถได้คืน Excel</strong>
         <p className="muted">
-          อ่านเฉพาะ สภ.เมืองนราธิวาส รถคืนแล้วจะปิดสถานะ ส่วนรถหายจะเป็น
-          รายการแจ้งเตือน และไม่สร้างรายการซ้ำจากไฟล์เดิม
+          อ่านเฉพาะ สภ.เมืองนราธิวาส ข้อมูลทุกแถวในไฟล์นี้เป็นรถหายแล้วได้คืน
+          จึงบันทึกเป็นปิดแล้ว แม้ต้นฉบับจะไม่ระบุวันที่คืน และไม่สร้างรายการซ้ำจากไฟล์เดิม
         </p>
       </div>
       <input
