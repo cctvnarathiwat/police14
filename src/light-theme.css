@@ -1121,6 +1121,62 @@ dd {
   }
 }
 
+/* Shared module typography: maps, investigations, maintenance, reports,
+   evidence, user management and dialogs use the same readable scale. */
+.mono, .eyebrow, .counter, .live-label,
+.map-label, .map-bottom, .map-warning, .leaflet-tooltip,
+.camera-result small, .footnote, .pagination, .empty,
+.timeline-select small, .timeline-select p, .evidence-card small,
+.kanban article small, .upload small, .hash,
+.search-results small, .alert-row small, .toast,
+.route-point-detail dt, .quality-tag, .investigation-recording-guide span {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.map-record-popup h3, .map-record-popup p,
+.camera-result strong, .result-title, .case-banner .muted,
+.timeline-select h4, .timeline-select p, .evidence-card strong,
+.kanban h3, .kanban article p, .detail-body h3,
+.settings-panel dl, .user-panel p, .report p,
+.search-results strong, .alert-row strong, .route-detail-grid dd {
+  font-size: 14px;
+  line-height: 1.6;
+}
+.case-banner h2, .report h2, .quick-panel h2 { font-size: 22px; font-weight: 700; }
+.case-numbers span, .health-legend > div, .bar-row, .bar-row > span,
+.donut span, .donut strong small { font-size: 13px; }
+.case-numbers b, .health-legend b, .bar-row b { font-size: 15px; font-weight: 700; }
+.timeline-actions button, .pagination button, .radius-summary button,
+.camera-picker-results button, .route-camera-results .button,
+.record-actions .icon-button, .inline-record-actions button {
+  font-size: 13px;
+  font-weight: 650;
+}
+dialog > header h2 { font-size: 25px; font-weight: 700; }
+dialog > header .eyebrow { font-size: 11px; }
+dt { font-size: 14px; }
+dd { font-size: 15px; line-height: 1.6; }
+.leaflet-control-attribution { font-size: 10px !important; }
+
+@media (max-width: 650px) {
+  .mono, .eyebrow, .counter, .live-label,
+  .map-label, .map-bottom, .map-warning, .leaflet-tooltip,
+  .camera-result small, .footnote, .pagination, .empty,
+  .timeline-select small, .timeline-select p, .evidence-card small,
+  .kanban article small, .upload small, .hash,
+  .search-results small, .alert-row small, .toast,
+  .route-point-detail dt, .quality-tag, .investigation-recording-guide span { font-size: 12px; }
+  .map-record-popup h3, .map-record-popup p,
+  .camera-result strong, .result-title, .case-banner .muted,
+  .timeline-select h4, .timeline-select p, .evidence-card strong,
+  .kanban h3, .kanban article p, .detail-body h3,
+  .settings-panel dl, .user-panel p, .report p,
+  .search-results strong, .alert-row strong, .route-detail-grid dd { font-size: 14px; }
+  .case-banner h2, .report h2, .quick-panel h2 { font-size: 21px; }
+  dialog > header h2 { font-size: 22px; }
+  dd { font-size: 14px; }
+}
+
 /* Typography: increase legibility for operational use at a glance. */
 :root {
   font-size: 15px;
@@ -1674,4 +1730,42 @@ tbody tr:nth-child(even) { background: #f8fbff; }
   .sidebar nav button svg { width: 17px; height: 17px; }
   .sidebar-bottom { margin-top: 8px; padding: 10px; border: 1px solid #9acbff62; border-radius: 10px; }
   .sidebar-bottom span { font-size: 12px; }
+}
+
+/* Final type scale overrides apply after all responsive theme rules. */
+:root { font-size: 15px; }
+body { line-height: 1.55; }
+.mono, .eyebrow, .counter, .live-label, .map-label, .map-bottom,
+.map-warning, .leaflet-tooltip, .camera-result small, .footnote,
+.pagination, .empty, .timeline-select small, .timeline-select p,
+.evidence-card small, .kanban article small, .upload small, .hash,
+.search-results small, .alert-row small, .toast, .route-point-detail dt,
+.quality-tag, .investigation-recording-guide span { font-size: 12px; line-height: 1.5; }
+.map-record-popup h3, .map-record-popup p, .camera-result strong,
+.result-title, .case-banner .muted, .timeline-select h4,
+.timeline-select p, .evidence-card strong, .kanban h3, .kanban article p,
+.detail-body h3, .settings-panel dl, .user-panel p, .report p,
+.search-results strong, .alert-row strong, .route-detail-grid dd { font-size: 14px; line-height: 1.6; }
+.case-banner h2, .report h2, .quick-panel h2 { font-size: 22px; font-weight: 700; }
+.case-numbers span, .health-legend > div, .bar-row, .bar-row > span,
+.donut span, .donut strong small { font-size: 13px; }
+.case-numbers b, .health-legend b, .bar-row b { font-size: 15px; font-weight: 700; }
+.timeline-actions button, .pagination button, .radius-summary button,
+.camera-picker-results button, .route-camera-results .button,
+.record-actions .icon-button, .inline-record-actions button { font-size: 13px; font-weight: 650; }
+dialog > header h2 { font-size: 25px; font-weight: 700; }
+dialog > header .eyebrow { font-size: 11px; }
+dt { font-size: 14px; }
+dd { font-size: 15px; line-height: 1.6; }
+.leaflet-control-attribution { font-size: 10px !important; }
+
+@media (max-width: 650px) {
+  .map-record-popup h3, .map-record-popup p, .camera-result strong,
+  .result-title, .case-banner .muted, .timeline-select h4,
+  .timeline-select p, .evidence-card strong, .kanban h3, .kanban article p,
+  .detail-body h3, .settings-panel dl, .user-panel p, .report p,
+  .search-results strong, .alert-row strong, .route-detail-grid dd { font-size: 14px; }
+  .case-banner h2, .report h2, .quick-panel h2 { font-size: 21px; }
+  dialog > header h2 { font-size: 22px; }
+  dd { font-size: 14px; }
 }
