@@ -65,7 +65,8 @@ export default function Analysis({
     [days, setDays] = useState(7),
     [showCameras, setShowCameras] = useState(true),
     [showIncidents, setShowIncidents] = useState(mode === "map"),
-    [showVehicles, setShowVehicles] = useState(mode === "map"),
+    [showVehicleAlerts, setShowVehicleAlerts] = useState(mode === "map"),
+    [showRecoveredVehicles, setShowRecoveredVehicles] = useState(mode === "map"),
     [showSightings, setShowSightings] = useState(mode === "map"),
     [coordinate, setCoordinate] = useState(""),
     [coordError, setCoordError] = useState(""),
@@ -80,6 +81,8 @@ export default function Analysis({
     [category, setCategory] = useState("");
   const cameras = rows.filter((r) => r.kind === "camera" && hasPosition(r));
   const vehicles = rows.filter((r) => r.kind === "vehicle" && hasPosition(r));
+  const vehicleAlerts = vehicles.filter((r) => s(r, "status") === "active");
+  const recoveredVehicles = vehicles.filter((r) => s(r, "status") === "closed");
   const sightings = rows.filter((r) => r.kind === "sighting" && hasPosition(r));
   const result = useMemo(
     () =>
@@ -300,7 +303,10 @@ export default function Analysis({
                 ? rows.filter((r) => r.kind === "incident" && hasPosition(r))
                 : []
             }
-            vehicles={showVehicles ? vehicles : []}
+            vehicles={[
+              ...(showVehicleAlerts ? vehicleAlerts : []),
+              ...(showRecoveredVehicles ? recoveredVehicles : []),
+            ]}
             sightings={showSightings ? sightings : []}
             onSelect={pick}
             onClick={(p) => {
@@ -393,10 +399,18 @@ export default function Analysis({
               <label>
                 <input
                   type="checkbox"
-                  checked={showVehicles}
-                  onChange={(e) => setShowVehicles(e.target.checked)}
+                  checked={showVehicleAlerts}
+                  onChange={(e) => setShowVehicleAlerts(e.target.checked)}
                 />
-                รถแจ้งเตือน ({vehicles.length})
+                รถแจ้งเตือน ({vehicleAlerts.length})
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={showRecoveredVehicles}
+                  onChange={(e) => setShowRecoveredVehicles(e.target.checked)}
+                />
+                รถได้คืน ({recoveredVehicles.length})
               </label>
               <label>
                 <input
