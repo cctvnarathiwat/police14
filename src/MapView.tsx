@@ -308,7 +308,7 @@ export default function MapView(p: Props) {
           </CircleMarker>
         ))}
         {p.vehicles?.map((vehicle) => {
-          const active = s(vehicle, "status") === "active";
+          const active = !["closed", "recovered"].includes(s(vehicle, "status"));
           const markerColor = active ? "#f97316" : "#94a3b8";
           const vehicleLabel = active ? "รถแจ้งเตือน" : "รถได้คืน";
           return (

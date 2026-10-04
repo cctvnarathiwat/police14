@@ -51,13 +51,14 @@ import Investigation, { EvidenceViewer } from "./Investigation";
 import Reports from "./Reports";
 import UsersPage from "./Users";
 import CameraHealth from "./CameraHealth";
+import VehicleCenter from "./VehicleCenter";
 const nav = [
   { id: "dashboard", label: "ภาพรวมศูนย์", icon: LayoutDashboard },
   { id: "map", label: "แผนที่ปฏิบัติการ", icon: Map },
   { id: "camera", label: "ทะเบียนกล้อง CCTV", icon: Camera },
   { id: "incident", label: "บันทึกเหตุการณ์", icon: TriangleAlert },
   { id: "job", label: "ซ่อมบำรุง / ภูมิทัศน์", icon: Wrench },
-  { id: "vehicle", label: "รถแจ้งเตือน", icon: Car },
+  { id: "vehicle", label: "รถแจ้งเตือน / พบรถ", icon: Car },
   { id: "heat", label: "Heat Map", icon: Flame },
   { id: "area", label: "วิเคราะห์พื้นที่", icon: Crosshair },
   { id: "route", label: "วิเคราะห์เส้นทาง", icon: Route },
@@ -502,7 +503,14 @@ function Workspace() {
               onEdit={(r) => edit("camera", undefined, undefined, r)}
             />
           )}
-          {["incident", "job", "vehicle", "evidence"].includes(page) && (
+          {page === "vehicle" && (
+            <VehicleCenter
+              onOpen={open}
+              onNew={(kind, parent, initial) => edit(kind, parent, initial)}
+              onEdit={(r) => edit(r.kind, r.parent_id ?? undefined, undefined, r)}
+            />
+          )}
+          {["incident", "job", "evidence"].includes(page) && (
             <RecordList
               key={page}
               kind={page as Kind}

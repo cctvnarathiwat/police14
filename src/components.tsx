@@ -105,17 +105,18 @@ export function Editor({
 }: EditorProps) {
   const { rows, save, upload } = useStore();
   const def = definitions[kind];
-  const [data, setData] = useState<Data>(() =>
-    record
-      ? { ...record.data }
-      : {
-          title: "",
-          code: `${def.prefix}-${new Date().getFullYear()}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`,
-          status: def.statuses[0],
-          occurred_at: new Date().toISOString(),
-          ...initial,
-        },
-  );
+  const [data, setData] = useState<Data>(() => {
+    if (record) return { ...record.data };
+    const generatedCode = `${def.prefix}-${new Date().getFullYear()}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
+    return {
+      title: "",
+      code: generatedCode,
+      case_id: kind === "vehicle" ? generatedCode : undefined,
+      status: def.statuses[0],
+      occurred_at: new Date().toISOString(),
+      ...initial,
+    };
+  });
   const [file, setFile] = useState<File | null>(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
