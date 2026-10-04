@@ -725,6 +725,54 @@ function IncidentImporter() {
     }
   }
 
+  async function closeImportedVehicleHistory() {
+    setBusy(true);
+    setError("");
+    setMessage("");
+    try {
+      const imported = rows.filter(
+        (record) =>
+          record.kind === "vehicle" &&
+          String(record.data.source_ref ?? "").startsWith("nara-vehicle-xlsx:") &&
+          String(record.data.status ?? "") !== "closed",
+      );
+      for (let start = 0; start < imported.length; start += 8) {
+        await Promise.all(
+          imported.slice(start, start + 8).map((record) => {
+            const notes = String(record.data.notes ?? "");
+            const marker = "สถานะจากไฟล์: รถหายแล้วได้คืน";
+            return save(
+              "vehicle",
+              {
+                ...record.data,
+                status: "closed",
+                priority: "normal",
+                notes: notes.includes(marker)
+                  ? notes
+                  : [
+                      notes,
+                      "สถานะจากไฟล์: รถหายแล้วได้คืน (ไม่ระบุวันที่คืนในไฟล์ต้นฉบับ)",
+                    ]
+                      .filter(Boolean)
+                      .join(" · "),
+              },
+              record,
+            );
+          }),
+        );
+      }
+      setMessage(
+        imported.length
+          ? `ปรับสถานะรถหายแล้วได้คืน ${imported.length} รายการเรียบร้อย`
+          : "ข้อมูลที่นำเข้าชุดนี้เป็นสถานะปิดแล้วทั้งหมด",
+      );
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : String(cause));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <section className="import-panel">
       <div>
@@ -750,6 +798,13 @@ function IncidentImporter() {
         onClick={() => inputRef.current?.click()}
       >
         <FileUp size={16} /> {busy ? "กำลังนำเข้า…" : "เลือกไฟล์ Excel"}
+      </button>
+      <button
+        className="button outline"
+        disabled={busy}
+        onClick={() => void closeImportedVehicleHistory()}
+      >
+        {busy ? "กำลังปรับสถานะ…" : "ปรับชุดข้อมูลเดิมเป็นรถได้คืน"}
       </button>
       {message && <p className="success-message">{message}</p>}
       {error && <p className="error">{error}</p>}
