@@ -87,6 +87,15 @@ interface Props {
   focus?: Point;
   selected?: string;
   heat?: RecordRow[];
+  hotspots?: Array<{
+    id: string;
+    center: Point;
+    score: number;
+    count: number;
+    color: string;
+    label: string;
+  }>;
+  onHotspotSelect?: (id: string) => void;
   children?: React.ReactNode;
 }
 export default function MapView(p: Props) {
@@ -226,6 +235,22 @@ export default function MapView(p: Props) {
             />
           )),
         )}
+        {p.hotspots?.map((spot) => (
+          <CircleMarker
+            key={spot.id}
+            center={spot.center}
+            radius={Math.min(17, 7 + spot.score)}
+            pathOptions={{
+              color: "#fff",
+              weight: 2,
+              fillColor: spot.color,
+              fillOpacity: 0.9,
+            }}
+            eventHandlers={{ click: () => p.onHotspotSelect?.(spot.id) }}
+          >
+            <Tooltip direction="top">{spot.label} · {spot.count} รายการ</Tooltip>
+          </CircleMarker>
+        ))}
         {groupCameraSites(p.cameras).map((site) => {
           const c = site[0];
           const selected = site.some((r) => r.id === p.selected);

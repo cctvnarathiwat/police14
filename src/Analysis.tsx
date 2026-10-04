@@ -1,6 +1,6 @@
 import { displayCode } from "./domain";
 import { CAMERA_TYPES } from "./domain";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Crosshair,
   Route,
@@ -10,6 +10,9 @@ import {
   Save,
   Plus,
   MapPin,
+  Flame,
+  Play,
+  Pause,
 } from "lucide-react";
 import MapView from "./MapView";
 import { Badge, Empty } from "./components";
@@ -61,8 +64,10 @@ export default function Analysis({
     [selected, setSelected] = useState<RecordRow | null>(null),
     [focus, setFocus] = useState<Point>(),
     [caseId, setCaseId] = useState(""),
-    [heatKind, setHeatKind] = useState("incident"),
     [days, setDays] = useState(7),
+    [heatLayers, setHeatLayers] = useState({ incident: true, sighting: true, vehicle: false }),
+    [heatPlaying, setHeatPlaying] = useState(false),
+    [selectedHotspot, setSelectedHotspot] = useState(""),
     [showCameras, setShowCameras] = useState(true),
     [showIncidents, setShowIncidents] = useState(mode === "map"),
     [showVehicleAlerts, setShowVehicleAlerts] = useState(mode === "map"),
@@ -129,9 +134,9 @@ export default function Analysis({
   );
   const heat = rows
     .filter((r) =>
-      heatKind === "offline"
-        ? r.kind === "camera" && s(r, "status") === "offline"
-        : r.kind === heatKind,
+      (r.kind === "incident" && heatLayers.incident) ||
+      (r.kind === "sighting" && heatLayers.sighting) ||
+      (r.kind === "vehicle" && heatLayers.vehicle && !["closed", "recovered"].includes(s(r, "status"))),
     )
     .filter((r) => {
       const time = Date.parse(s(r, "occurred_at") || r.updated_at);
@@ -143,8 +148,8 @@ export default function Analysis({
             : Date.now() - days * 86400000) &&
         (!dateTo || time <= Date.parse(`${dateTo}T23:59:59.999+07:00`)) &&
         (!hour ||
-          (bangkokHour >= Number(hour) && bangkokHour < Number(hour) + 6)) &&
-        (!category || s(r, "category") === category)
+          (bangkokHour >= Number(hour) && bangkokHour < Number(hour) + 3)) &&
+        (!category || r.kind !== "incident" || s(r, "category") === category)
       );
     })
     .map((r) => {
@@ -156,6 +161,40 @@ export default function Analysis({
           : null;
     })
     .filter((r): r is RecordRow => !!r && hasPosition(r));
+  const hotspots = useMemo(() => {
+    const buckets = new Map<string, { records: RecordRow[]; center: Point }>();
+    heat.forEach((record) => {
+      const [lat, lng] = position(record);
+      const key = `${Math.round(lat / 0.004)}:${Math.round(lng / 0.004)}`;
+      const current = buckets.get(key) ?? { records: [], center: [lat, lng] as Point };
+      current.records.push(record);
+      current.center = [
+        current.records.reduce((sum, row) => sum + position(row)[0], 0) / current.records.length,
+        current.records.reduce((sum, row) => sum + position(row)[1], 0) / current.records.length,
+      ];
+      buckets.set(key, current);
+    });
+    return [...buckets.entries()]
+      .map(([id, bucket], index) => {
+        const incidents = bucket.records.filter((r) => r.kind === "incident").length;
+        const sightings = bucket.records.filter((r) => r.kind === "sighting").length;
+        const vehicles = bucket.records.filter((r) => r.kind === "vehicle").length;
+        const nearbyCameras = cameras.filter((camera) => meters(bucket.center, position(camera)) <= 450).length;
+        const score = incidents * 3 + sightings * 2 + vehicles;
+        const color = score >= 9 ? "#dc2626" : score >= 5 ? "#f97316" : score >= 2 ? "#eab308" : "#16a34a";
+        return { id, center: bucket.center, count: bucket.records.length, incidents, sightings, vehicles, nearbyCameras, score, color, label: `HOTSPOT #${String(index + 1).padStart(2, "0")}` };
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8);
+  }, [heat, cameras]);
+  const activeHotspot = hotspots.find((spot) => spot.id === selectedHotspot) ?? hotspots[0];
+  useEffect(() => {
+    if (!heatPlaying || mode !== "heat") return;
+    const timer = window.setInterval(() => {
+      setHour((value) => String(((Number(value || 0) + 3) % 24)));
+    }, 1500);
+    return () => window.clearInterval(timer);
+  }, [heatPlaying, mode]);
   const routes = rows.filter((r) => r.kind === "route");
   const pick = (r: RecordRow) => {
     setSelected(r);
@@ -164,6 +203,14 @@ export default function Analysis({
   return (
     <>
       <div className="toolbar">
+        {mode === "heat" && (
+          <div className="heat-kpis">
+            <span><Flame size={15} /> {hotspots.length} Hotspots</span>
+            <span>🚨 {heat.filter((r) => r.kind === "incident").length} เหตุการณ์</span>
+            <span>🚗 {heat.filter((r) => r.kind === "sighting").length} จุดพบรถ</span>
+            <span>📹 {cameras.length} CCTV</span>
+          </div>
+        )}
         <div className="segmented">
           {mode !== "route" && (
             <button
@@ -282,10 +329,12 @@ export default function Analysis({
           <div className="panel-heading">
             <h3>
               <MapPin size={17} />{" "}
-              {mode === "heat" ? "ความหนาแน่นของข้อมูล" : "แผนที่ปฏิบัติการ"}
+              {mode === "heat" ? "HEATMAP & AREA ANALYTICS" : "แผนที่ปฏิบัติการ"}
             </h3>
             <span className="muted">
-              {tool === "point"
+              {mode === "heat"
+                ? "คลิก Hotspot เพื่อดูองค์ประกอบและคะแนนความเสี่ยง"
+                : tool === "point"
                 ? "คลิกแผนที่เพื่อเลือกจุดวิเคราะห์"
                 : `คลิกเพิ่มจุด • ${vertices.length} จุด`}
             </span>
@@ -326,6 +375,8 @@ export default function Analysis({
             focus={focus}
             selected={selected?.id}
             heat={mode === "heat" ? heat : undefined}
+            hotspots={mode === "heat" ? hotspots : undefined}
+            onHotspotSelect={setSelectedHotspot}
           />
           <div className="map-bottom">
             <span>
@@ -483,18 +534,19 @@ export default function Analysis({
             </select>
             {mode === "heat" && (
               <>
-                <label>
-                  ประเภทข้อมูล
-                  <select
-                    value={heatKind}
-                    onChange={(e) => setHeatKind(e.target.value)}
-                  >
-                    <option value="incident">เหตุการณ์</option>
-                    <option value="sighting">จุดพบรถ</option>
-                    <option value="offline">กล้อง Offline</option>
-                    <option value="job">งานซ่อมบำรุง</option>
-                  </select>
-                </label>
+                <div className="heat-layer-picker">
+                  <strong>ชั้นข้อมูลความหนาแน่น</strong>
+                  {([
+                    ["incident", "เหตุการณ์"],
+                    ["sighting", "จุดพบรถ"],
+                    ["vehicle", "รถเฝ้าระวัง"],
+                  ] as const).map(([key, label]) => (
+                    <label key={key}>
+                      <input type="checkbox" checked={heatLayers[key]} onChange={(e) => setHeatLayers((layers) => ({ ...layers, [key]: e.target.checked }))} />
+                      {label}
+                    </label>
+                  ))}
+                </div>
                 <label>
                   ช่วงเวลา
                   <select
@@ -531,13 +583,17 @@ export default function Analysis({
                     onChange={(e) => setHour(e.target.value)}
                   >
                     <option value="">ตลอดวัน</option>
-                    {[0, 6, 12, 18].map((v) => (
+                    {[0, 3, 6, 9, 12, 15, 18, 21].map((v) => (
                       <option key={v} value={String(v)}>
-                        {String(v).padStart(2, "0")}:00–{v + 6}:00
+                        {String(v).padStart(2, "0")}:00–{String((v + 3) % 24).padStart(2, "0")}:00
                       </option>
                     ))}
                   </select>
                 </label>
+                <button className="button" onClick={() => setHeatPlaying((value) => !value)}>
+                  {heatPlaying ? <Pause size={15} /> : <Play size={15} />}
+                  {heatPlaying ? "หยุดเล่นเวลา" : "เล่นย้อนหลังตามเวลา"}
+                </button>
                 <label>
                   ประเภทเหตุ / งาน
                   <select
@@ -548,7 +604,7 @@ export default function Analysis({
                     {[
                       ...new Set(
                         rows
-                          .filter((r) => r.kind === heatKind)
+                          .filter((r) => r.kind === "incident")
                           .map((r) => s(r, "category")),
                       ),
                     ]
@@ -559,8 +615,16 @@ export default function Analysis({
                   </select>
                 </label>
                 <p className="muted">
-                  {heat.length} จุด • สีแสดงการกระจุกตัวของข้อมูลที่บันทึก
+                  {heat.length} จุด • แดงสูงมาก · ส้มสูง · เหลืองปานกลาง · เขียวต่ำ
                 </p>
+                {activeHotspot && (
+                  <section className="hotspot-card">
+                    <span>🔥 {activeHotspot.label}</span>
+                    <h4>Risk score {activeHotspot.score}</h4>
+                    <p>เหตุการณ์ {activeHotspot.incidents} · จุดพบรถ {activeHotspot.sightings} · รถเฝ้าระวัง {activeHotspot.vehicles} · CCTV รอบพื้นที่ {activeHotspot.nearbyCameras}</p>
+                    <small>คะแนน = เหตุการณ์ ×3 + จุดพบรถ ×2 + รถเฝ้าระวัง ×1; ใช้ข้อมูลที่เลือกเท่านั้น</small>
+                  </section>
+                )}
               </>
             )}
             {multi && (

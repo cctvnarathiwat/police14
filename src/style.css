@@ -1230,6 +1230,40 @@ tbody tr:hover {
   width: 100%;
   font-size: 11px;
 }
+.heat-kpis {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-right: 8px;
+}
+.heat-kpis span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid #31516f;
+  color: #cbe6fa;
+  background: #122941;
+  padding: 6px 8px;
+  border-radius: 7px;
+  font-size: 10px;
+}
+.heat-layer-picker {
+  display: grid;
+  gap: 7px;
+  padding: 9px;
+  border: 1px solid #2b4662;
+  border-radius: 7px;
+  background: #0e2238;
+}
+.heat-layer-picker label { display: flex; gap: 7px; align-items: center; font-size: 11px; }
+.hotspot-card {
+  border-left: 3px solid #f97316;
+  padding: 10px;
+  background: #172b40;
+  border-radius: 0 6px 6px 0;
+}
+.hotspot-card h4 { margin: 6px 0; color: #f8c45d; }
+.hotspot-card p, .hotspot-card small { font-size: 10px; line-height: 1.55; color: #b9c9db; }
 .result-title {
   display: flex;
   justify-content: space-between;
