@@ -1264,6 +1264,7 @@ tbody tr:hover {
 }
 .hotspot-card h4 { margin: 6px 0; color: #f8c45d; }
 .hotspot-card p, .hotspot-card small { font-size: 10px; line-height: 1.55; color: #b9c9db; }
+.heat-score-note { font-size: 10px; line-height: 1.5; color: #9cb5cf; border-top: 1px solid #2b4662; padding-top: 9px; }
 .result-title {
   display: flex;
   justify-content: space-between;

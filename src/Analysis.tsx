@@ -617,6 +617,7 @@ export default function Analysis({
                 <p className="muted">
                   {heat.length} จุด • แดงสูงมาก · ส้มสูง · เหลืองปานกลาง · เขียวต่ำ
                 </p>
+                <p className="heat-score-note">Risk score = เหตุการณ์ ×3 + จุดพบรถ ×2 + รถเฝ้าระวัง ×1; CCTV ใช้แสดงความครอบคลุมรอบจุด ไม่ใช่การตัดสินความเสี่ยง</p>
                 {activeHotspot && (
                   <section className="hotspot-card">
                     <span>🔥 {activeHotspot.label}</span>
