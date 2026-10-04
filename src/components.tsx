@@ -301,6 +301,21 @@ export function Editor({
                       ))}
                   </select>
                 </>
+              ) : f.ref ? (
+                <select
+                  required={f.required}
+                  value={String(data[f.key] ?? "")}
+                  onChange={(e) => set(f.key, e.target.value)}
+                >
+                  <option value="">เลือก…</option>
+                  {rows
+                    .filter((record) => record.kind === f.ref && !record.archived)
+                    .map((record) => (
+                      <option key={record.id} value={record.id}>
+                        {displayCode(record)} · {s(record, "title")}
+                      </option>
+                    ))}
+                </select>
               ) : f.type === "select" ? (
                 <select
                   required={f.required}
@@ -1001,7 +1016,8 @@ export function Details({
     (c) =>
       c.parent_id === r.id ||
       c.data.camera_id === r.id ||
-      c.data.incident_id === r.id,
+      c.data.incident_id === r.id ||
+      c.data.vehicle_id === r.id,
   );
   return (
     <Modal title={s(r, "title")} onClose={onClose}>
@@ -1062,7 +1078,7 @@ export function Details({
         {r.kind === "evidence" && (
           <p className="hash">SHA-256: {s(r, "sha256")}</p>
         )}
-        {(r.kind === "job" || r.kind === "incident" || r.kind === "case") &&
+      {(["job", "incident", "case", "vehicle", "sighting"].includes(r.kind)) &&
           canWrite(profile!.role, "evidence") && (
             <button className="button" onClick={() => onAdd("evidence", r.id)}>
               <FileUp size={16} />

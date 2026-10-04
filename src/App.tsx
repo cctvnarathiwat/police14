@@ -291,7 +291,9 @@ function Workspace() {
       (r.kind === "camera" && s(r, "status") === "offline") ||
       (r.kind === "job" &&
         s(r, "status") !== "completed" &&
-        Date.parse(s(r, "due_date")) < Date.now() + 86400000),
+        Date.parse(s(r, "due_date")) < Date.now() + 86400000) ||
+      (r.kind === "vehicle" &&
+        ["active", "detected", "tracking"].includes(s(r, "status"))),
   );
   const searchResults = query
     ? rows
@@ -508,6 +510,10 @@ function Workspace() {
               onOpen={open}
               onNew={(kind, parent, initial) => edit(kind, parent, initial)}
               onEdit={(r) => edit(r.kind, r.parent_id ?? undefined, undefined, r)}
+              onInvestigation={(record) => {
+                setInitialCase(record.id);
+                navigate("investigation");
+              }}
             />
           )}
           {["incident", "job", "evidence"].includes(page) && (

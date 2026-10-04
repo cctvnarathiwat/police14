@@ -30,9 +30,14 @@ export function timelineSummary(timeline: RecordRow[]) {
 }
 
 export function orderedTimeline(rows: RecordRow[], caseId: string) {
+  const currentCase = rows.find((r) => r.id === caseId);
+  const vehicleId = currentCase ? s(currentCase, "vehicle_id") : "";
   return rows
     .filter(
-      (r) => !r.archived && r.kind === "timeline" && r.parent_id === caseId,
+      (r) =>
+        !r.archived &&
+        ((r.kind === "timeline" && r.parent_id === caseId) ||
+          (r.kind === "sighting" && !!vehicleId && r.parent_id === vehicleId)),
     )
     .sort(
       (a, b) =>
@@ -46,7 +51,7 @@ export function evidenceForPoint(rows: RecordRow[], point: RecordRow) {
     (e) =>
       !e.archived &&
       e.kind === "evidence" &&
-      e.parent_id === point.parent_id &&
+      (e.parent_id === point.id || e.parent_id === point.parent_id) &&
       (e.data.timeline_id
         ? e.data.timeline_id === point.id
         : !!point.data.camera_id && e.data.camera_id === point.data.camera_id),

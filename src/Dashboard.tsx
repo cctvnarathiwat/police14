@@ -11,6 +11,7 @@ import {
   Clock,
   ShieldCheck,
   Plus,
+  Car,
 } from "lucide-react";
 import { useStore, demo } from "./context";
 import { dateTime, hasPosition, s, type Kind, type RecordRow } from "./domain";
@@ -39,7 +40,7 @@ export default function Dashboard({
     disposed = cameras.filter((r) => s(r, "status") === "disposed").length,
     inventory = cameras.filter((r) => s(r, "status") === "inventory").length;
   const recent = [...rows]
-    .filter((r) => ["incident", "job", "case", "sighting"].includes(r.kind))
+    .filter((r) => ["incident", "job", "case", "vehicle", "sighting"].includes(r.kind))
     .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
     .slice(0, 5);
   const stats = [
@@ -74,6 +75,15 @@ export default function Dashboard({
       tone: "amber",
       note: `${rows.filter((r) => r.kind === "job" && s(r, "status") !== "completed").length} งานอยู่ระหว่างดำเนินการ`,
       page: "job",
+    },
+    {
+      label: "รถเฝ้าระวัง",
+      value: rows.filter((r) => r.kind === "vehicle" && ["active", "detected", "tracking"].includes(s(r, "status"))).length,
+      icon: Car,
+      tone: "red",
+      note: `${rows.filter((r) => r.kind === "sighting" && !r.archived).length} จุดพบรถที่บันทึก`,
+      page: "vehicle",
+      unit: "เคส",
     },
   ];
   return (
@@ -119,7 +129,7 @@ export default function Dashboard({
             </div>
             <div className="stat-value">
               {v.value.toString().padStart(2, "0")}
-              <span>กล้อง</span>
+              <span>{v.unit ?? "กล้อง"}</span>
             </div>
             <div className="stat-note">
               <i className="dot" />

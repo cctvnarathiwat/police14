@@ -239,7 +239,7 @@ export function Provider({ children }: { children: ReactNode }) {
       rows.some(
         (child) =>
           child.parent_id === r.id ||
-          ["camera_id", "incident_id"].some((k) => child.data[k] === r.id),
+          ["camera_id", "incident_id", "vehicle_id"].some((k) => child.data[k] === r.id),
       )
     )
       throw new Error(

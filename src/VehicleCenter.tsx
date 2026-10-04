@@ -9,6 +9,7 @@ type Props = {
   onOpen: (record: RecordRow) => void;
   onNew: (kind: "vehicle" | "sighting", parent?: string, initial?: Partial<Data>) => void;
   onEdit: (record: RecordRow) => void;
+  onInvestigation: (record: RecordRow) => void;
 };
 
 type VehiclePoint = { record: RecordRow; kind: "origin" | "detection"; at: string };
@@ -26,8 +27,8 @@ function pointLabel(point: VehiclePoint, index: number, total: number) {
   return index === total - 1 ? "พบล่าสุด" : `ตรวจพบ #${index}`;
 }
 
-export default function VehicleCenter({ onOpen, onNew, onEdit }: Props) {
-  const { rows, profile } = useStore();
+export default function VehicleCenter({ onOpen, onNew, onEdit, onInvestigation }: Props) {
+  const { rows, profile, save } = useStore();
   const vehicles = rows.filter((r) => r.kind === "vehicle" && !r.archived);
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState("");
@@ -46,6 +47,9 @@ export default function VehicleCenter({ onOpen, onNew, onEdit }: Props) {
         .filter((r) => r.kind === "sighting" && !r.archived && r.parent_id === selected.id)
         .sort((a, b) => s(a, "occurred_at").localeCompare(s(b, "occurred_at")))
     : [];
+  const linkedCase = selected
+    ? rows.find((r) => r.kind === "case" && !r.archived && s(r, "vehicle_id") === selected.id)
+    : undefined;
   const points = useMemo<VehiclePoint[]>(() => {
     if (!selected) return [];
     const origin = hasPosition(selected)
@@ -62,6 +66,21 @@ export default function VehicleCenter({ onOpen, onNew, onEdit }: Props) {
   const activeCount = vehicles.filter((r) => ["active", "detected", "tracking"].includes(s(r, "status"))).length;
   const lastSighting = sightings.at(-1);
   const canWrite = profile?.role !== "viewer";
+  async function createInvestigationCase() {
+    if (!selected || !profile) return;
+    const created = await save("case", {
+      code: `INV-${new Date().getFullYear()}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`,
+      title: `ติดตามรถ ${s(selected, "plate")} ${s(selected, "province")}`,
+      status: "investigating",
+      vehicle_id: selected.id,
+      incident_id: s(selected, "incident_id"),
+      area: s(selected, "area") || "รอตรวจสอบพื้นที่",
+      assignee: profile.display_name,
+      occurred_at: s(selected, "occurred_at") || new Date().toISOString(),
+      notes: `สร้างจากเคสติดตามรถ ${s(selected, "case_id") || displayCode(selected)}`,
+    });
+    onInvestigation(created);
+  }
   return (
     <div className="vehicle-center">
       <section className="vehicle-center-head">
@@ -105,6 +124,7 @@ export default function VehicleCenter({ onOpen, onNew, onEdit }: Props) {
             <div className="vehicle-actions">
               {canWrite && <button className="button primary" onClick={() => onNew("sighting", selected.id, { title: `พบรถ ${s(selected, "plate")}`, status: "unverified", occurred_at: new Date().toISOString(), camera_id: "" })}><Plus size={16} /> เพิ่มจุดพบรถ</button>}
               <button className="button" onClick={() => onEdit(selected)}>แก้ไขเคส</button>
+              {linkedCase ? <button className="button" onClick={() => onInvestigation(linkedCase)}>เปิด Timeline CCTV</button> : canWrite && <button className="button" onClick={() => void createInvestigationCase()}>สร้างแฟ้มสืบสวน</button>}
               {lastSighting && <button className="button" onClick={() => onOpen(lastSighting)}>ดูหลักฐานล่าสุด</button>}
             </div>
           </>}

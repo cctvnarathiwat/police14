@@ -76,8 +76,13 @@ export default function Investigation({
     [error, setError] = useState("");
   const current = cases.find((c) => c.id === caseId);
   const timeline = orderedTimeline(rows, caseId);
+  const linkedVehicleId = current ? s(current, "vehicle_id") : "";
   const evidence = rows.filter(
-      (r) => r.kind === "evidence" && r.parent_id === caseId,
+      (r) =>
+        r.kind === "evidence" &&
+        (r.parent_id === caseId ||
+          r.parent_id === linkedVehicleId ||
+          timeline.some((point) => point.id === r.parent_id)),
     ),
     cameras = rows.filter(
       (r) =>
@@ -694,9 +699,9 @@ export default function Investigation({
                               {camera
                                 ? (displayCode(camera) || "ไม่ระบุ UID") + " · "
                                 : ""}
-                              {s(t, "observation")}
+                              {s(t, "observation") || s(t, "notes") || s(t, "area") || s(t, "title")}
                             </p>
-                            {s(t, "movement") && <p>{s(t, "movement")}</p>}
+                            {(s(t, "movement") || s(t, "direction")) && <p>{s(t, "movement") || s(t, "direction")}</p>}
                             {s(t, "image_quality") && (
                               <span className="quality-tag">
                                 {s(t, "image_quality")}
@@ -728,7 +733,7 @@ export default function Investigation({
                             {write && (
                               <button
                                 onClick={() =>
-                                  onEdit("timeline", caseId, undefined, t)
+                                  onEdit(t.kind, t.parent_id ?? caseId, undefined, t)
                                 }
                               >
                                 แก้ไข
@@ -794,11 +799,11 @@ export default function Investigation({
                 </div>
                 <div>
                   <dt>ทิศทาง</dt>
-                  <dd>{s(chosen, "movement") || "ยังไม่ระบุ"}</dd>
+                  <dd>{s(chosen, "movement") || s(chosen, "direction") || "ยังไม่ระบุ"}</dd>
                 </div>
                 <div>
                   <dt>สิ่งที่ตรวจพบ</dt>
-                  <dd>{s(chosen, "observation") || "ยังไม่ระบุ"}</dd>
+                  <dd>{s(chosen, "observation") || s(chosen, "notes") || s(chosen, "area") || "ยังไม่ระบุ"}</dd>
                 </div>
                 <div>
                   <dt>บุคคล / ยานพาหนะ</dt>
@@ -833,7 +838,7 @@ export default function Investigation({
                   <button
                     className="button"
                     onClick={() =>
-                      onEdit("evidence", caseId, {
+                      onEdit("evidence", chosen.id, {
                         camera_id: chosen.data.camera_id,
                         timeline_id: chosen.id,
                         occurred_at: chosen.data.occurred_at,
