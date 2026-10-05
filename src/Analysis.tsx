@@ -194,6 +194,21 @@ export default function Analysis({
   const hotspotCameras = activeHotspot
     ? cameras.filter((camera) => meters(activeHotspot.center, position(camera)) <= 450)
     : [];
+  const heatHours = Array.from({ length: 8 }, (_, index) => {
+    const start = index * 3;
+    const count = heat.filter((record) => {
+      const time = Date.parse(s(record, "occurred_at") || record.updated_at);
+      return Number.isFinite(time) && new Date(time + 7 * 3600000).getUTCHours() >= start && new Date(time + 7 * 3600000).getUTCHours() < start + 3;
+    }).length;
+    return { start, count };
+  });
+  const topCategories = [...new Set(heat.filter((record) => record.kind === "incident").map((record) => s(record, "category") || "ไม่ระบุ"))]
+    .map((name) => ({ name, count: heat.filter((record) => record.kind === "incident" && (s(record, "category") || "ไม่ระบุ") === name).length }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+  const hotspotCameraCoverage = hotspots.length
+    ? Math.round(hotspots.reduce((sum, spot) => sum + Math.min(100, spot.nearbyCameras * 20), 0) / hotspots.length)
+    : 0;
   useEffect(() => {
     if (!heatPlaying || mode !== "heat") return;
     const timer = window.setInterval(() => {
@@ -624,6 +639,14 @@ export default function Analysis({
                   {heat.length} จุด • แดงสูงมาก · ส้มสูง · เหลืองปานกลาง · เขียวต่ำ
                 </p>
                 <p className="heat-score-note">Risk score = เหตุการณ์ ×3 + จุดพบรถ ×2 + รถเฝ้าระวัง ×1; CCTV ใช้แสดงความครอบคลุมรอบจุด ไม่ใช่การตัดสินความเสี่ยง</p>
+                <section className="heat-insights">
+                  <h4>ช่วงเวลาที่พบข้อมูลมาก</h4>
+                  <div className="heat-hour-bars">
+                    {heatHours.map(({ start, count }) => <button key={start} title={`${String(start).padStart(2, "0")}:00–${String((start + 3) % 24).padStart(2, "0")}:00 · ${count} รายการ`} onClick={() => setHour(String(start))}><i style={{ height: `${Math.max(8, Math.round((count / Math.max(...heatHours.map((item) => item.count), 1)) * 42))}px` }} /><span>{String(start).padStart(2, "0")}</span></button>)}
+                  </div>
+                  <p>CCTV coverage รอบ Hotspot เฉลี่ย {hotspotCameraCoverage}%</p>
+                  {topCategories.length > 0 && <><h4>ประเภทเหตุการณ์</h4><div className="heat-category-list">{topCategories.map((item) => <button key={item.name} onClick={() => setCategory(item.name === "ไม่ระบุ" ? "" : item.name)}><span>{item.name}</span><b>{item.count}</b></button>)}</div></>}
+                </section>
                 {activeHotspot && (
                   <section className="hotspot-card">
                     <span>🔥 {activeHotspot.label}</span>
