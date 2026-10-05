@@ -188,6 +188,12 @@ export default function Analysis({
       .slice(0, 8);
   }, [heat, cameras]);
   const activeHotspot = hotspots.find((spot) => spot.id === selectedHotspot) ?? hotspots[0];
+  const hotspotRecords = activeHotspot
+    ? heat.filter((record) => meters(activeHotspot.center, position(record)) <= 450)
+    : [];
+  const hotspotCameras = activeHotspot
+    ? cameras.filter((camera) => meters(activeHotspot.center, position(camera)) <= 450)
+    : [];
   useEffect(() => {
     if (!heatPlaying || mode !== "heat") return;
     const timer = window.setInterval(() => {
@@ -363,7 +369,7 @@ export default function Analysis({
               else setVertices((v) => [...v, p]);
             }}
             center={
-              tool === "point" && mode !== "map" && mode !== "heat"
+              tool === "point" && mode !== "map"
                 ? center
                 : undefined
             }
@@ -624,8 +630,17 @@ export default function Analysis({
                     <h4>Risk score {activeHotspot.score}</h4>
                     <p>เหตุการณ์ {activeHotspot.incidents} · จุดพบรถ {activeHotspot.sightings} · รถเฝ้าระวัง {activeHotspot.vehicles} · CCTV รอบพื้นที่ {activeHotspot.nearbyCameras}</p>
                     <small>คะแนน = เหตุการณ์ ×3 + จุดพบรถ ×2 + รถเฝ้าระวัง ×1; ใช้ข้อมูลที่เลือกเท่านั้น</small>
+                    <div className="hotspot-actions">
+                      <button onClick={() => { setCenter(activeHotspot.center); setFocus(activeHotspot.center); setTool("point"); }}>วิเคราะห์พื้นที่</button>
+                      {hotspotRecords.filter((record) => record.kind === "incident").slice(0, 1).map((record) => <button key={record.id} onClick={() => onOpen(record)}>ดูเหตุการณ์</button>)}
+                      {hotspotCameras.slice(0, 1).map((camera) => <button key={camera.id} onClick={() => onOpen(camera)}>ดูกล้อง CCTV</button>)}
+                    </div>
+                    <div className="hotspot-list">
+                      {hotspotRecords.slice(0, 5).map((record) => <button key={record.id} onClick={() => onOpen(record)}><span>{record.kind === "incident" ? "🚨" : record.kind === "sighting" ? "🚗" : "⚠️"}</span>{s(record, "title") || displayCode(record)}</button>)}
+                    </div>
                   </section>
                 )}
+                {hotspots.length > 1 && <div className="hotspot-ranking"><strong>อันดับพื้นที่น่าสนใจ</strong>{hotspots.map((spot, index) => <button key={spot.id} className={spot.id === activeHotspot?.id ? "active" : ""} onClick={() => { setSelectedHotspot(spot.id); setFocus(spot.center); }}><b>{index + 1}</b><span>{spot.label}</span><em>{spot.count} จุด · {spot.score} คะแนน</em></button>)}</div>}
               </>
             )}
             {multi && (

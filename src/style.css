@@ -1265,6 +1265,16 @@ tbody tr:hover {
 .hotspot-card h4 { margin: 6px 0; color: #f8c45d; }
 .hotspot-card p, .hotspot-card small { font-size: 10px; line-height: 1.55; color: #b9c9db; }
 .heat-score-note { font-size: 10px; line-height: 1.5; color: #9cb5cf; border-top: 1px solid #2b4662; padding-top: 9px; }
+.hotspot-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.hotspot-actions button, .hotspot-list button, .hotspot-ranking button { border: 1px solid #466786; color: #d7ebfc; background: #112b45; border-radius: 5px; font-size: 10px; padding: 6px 7px; }
+.hotspot-list { display: grid; gap: 4px; margin-top: 10px; }
+.hotspot-list button { text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hotspot-list span { margin-right: 5px; }
+.hotspot-ranking { display: grid; gap: 5px; }
+.hotspot-ranking strong { font-size: 11px; margin-top: 3px; }
+.hotspot-ranking button { display: grid; grid-template-columns: 20px 1fr auto; gap: 6px; align-items: center; text-align: left; }
+.hotspot-ranking button.active { border-color: #f59e0b; background: #26354a; }
+.hotspot-ranking em { font-size: 9px; color: #a8bed1; font-style: normal; }
 .result-title {
   display: flex;
   justify-content: space-between;
